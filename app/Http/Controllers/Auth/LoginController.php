@@ -15,11 +15,23 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'voter_id' => ['required', 'string'],
+        // Validate login fields
+        $request->validate([
+            'login' => ['required', 'string'], // can be email or voter_id
             'password' => ['required'],
         ]);
 
+        $loginInput = $request->input('login');
+
+        // Check if input is email or voter_id
+        $field = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'voter_id';
+
+        $credentials = [
+            $field => $loginInput,
+            'password' => $request->password,
+        ];
+
+        // Attempt login
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
 
@@ -29,8 +41,8 @@ class LoginController extends Controller
         }
 
         return back()->withErrors([
-            'voter_id' => 'Invalid credentials.',
-        ])->onlyInput('voter_id');
+            'login' => 'Invalid credentials.',
+        ])->onlyInput('login');
     }
 
     public function logout(Request $request)
@@ -41,12 +53,11 @@ class LoginController extends Controller
 
         return redirect()->route('login');
     }
+
     protected function redirectTo()
     {
-        if (auth()->user()->role === 'admin') {
-            return '/admin/dashboard';
-        }
-        return '/user/dashboard';
+        return auth()->user()->role === 'admin'
+            ? '/admin/dashboard'
+            : '/user/dashboard';
     }
-
 }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoteSecure</title>
+    <title>VoteMaster</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -143,7 +143,8 @@
         <form id="loginForm" method="POST" action="{{ route('login') }}">
             @csrf
             <div class="mb-3 position-relative">
-                <input type="text" name="voter_id" class="form-control ps-5" placeholder="Voter ID Number" required>
+            <input type="text" name="login" class="form-control ps-5" placeholder="Voter ID/Email " required>
+
                 <i class="bi bi-card-text position-absolute"
                     style="top:50%; left:15px; transform:translateY(-50%);"></i>
             </div>

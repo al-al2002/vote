@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\VoterController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\ElectionController;
 
 // ----------------------
 // Authentication Routes
@@ -15,28 +18,36 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ----------------------
-// Dashboards
+// Admin Dashboard + Admin Routes
 // ----------------------
-Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard');   // correct path
-})->name('admin.dashboard');
+Route::middleware(['auth', 'isAdmin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-Route::get('/user/dashboard', function () {
-    return view('user.dashboard');    // correct path
-})->name('user.dashboard');
+        // Manage Elections
+        Route::resource('elections', ElectionController::class);
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+        // Manage Voters
+        Route::get('/voters', [VoterController::class, 'index'])->name('voters');
+        Route::patch('/voters/{user}/toggle', [VoterController::class, 'toggleEligibility'])->name('voters.toggle');
+    });
+
+//candidates
+Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('candidates', App\Http\Controllers\Admin\CandidateController::class);
 });
+Route::resource('candidates', App\Http\Controllers\Admin\CandidateController::class);
 
-// User dashboard
-Route::get('/user/dashboard', function () {
-    return view('user.dashboard');
-})->name('user.dashboard');
 
-Route::get('/admin/dashboard', [App\Http\Controllers\AdminDashboardController::class, 'index'])
-    ->name('admin.dashboard')
-    ->middleware('auth');
 
+// ----------------------
+// User Dashboard (auth only, not admin)
+// ----------------------
+Route::middleware(['auth'])->group(function () {
+    Route::get('/user/dashboard', function () {
+        return view('user.dashboard');
+    })->name('user.dashboard');
+});

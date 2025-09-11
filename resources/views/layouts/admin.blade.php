@@ -14,8 +14,9 @@
             font-family: 'Inter', sans-serif;
         }
 
+        /* Sidebar color updated */
         .sidebar-gradient {
-            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            background: linear-gradient(180deg, #09182D 0%, #0F223A 50%, #1A3554 100%);
         }
 
         .menu-item {
@@ -83,7 +84,7 @@
                 </div>
                 <div>
                     <h1 class="text-white font-bold text-lg">VoteMaster</h1>
-                    <p class="text-blue-200 text-xs">Admin Panel</p>
+                    <p class="text-gray-300 text-xs">Admin Panel</p>
                 </div>
             </div>
         </div>
@@ -98,7 +99,7 @@
                 </div>
                 <div>
                     <h3 class="text-white font-semibold">{{ auth()->user()->name }}</h3>
-                    <p class="text-blue-200 text-sm">System Administrator</p>
+                    <p class="text-gray-300 text-sm">System Administrator</p>
                     <div class="flex items-center mt-1">
                         <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
                         <span class="text-green-300 text-xs">Online</span>
@@ -118,20 +119,29 @@
                     </svg> Dashboard
                 </a>
 
-                <a href="#" class="menu-item flex items-center px-4 py-3 text-white rounded-lg">
+                <a href="{{ route('admin.elections.index') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2z"></path>
                     </svg> Elections
                 </a>
 
-                <a href="#" class="menu-item flex items-center px-4 py-3 text-white rounded-lg">
+            <a href="{{ route('admin.candidates.index') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
+                      @if(request()->routeIs('admin.candidates.*')) active @endif">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z">
                         </path>
                     </svg> Candidates
                 </a>
+                <a href="{{ route('admin.voters') }}"
+                    class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.voters.*')) active @endif">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg> Manage Voters
+                </a>
+
             </div>
         </nav>
 
