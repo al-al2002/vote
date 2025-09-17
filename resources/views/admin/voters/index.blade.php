@@ -40,31 +40,34 @@
                                 <img src="{{ asset('storage/' . $voter->profile_photo) }}" alt="Profile"
                                     class="w-10 h-10 rounded-full object-cover border border-gray-300">
                             @else
-                                <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">N/A
+                                <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
+                                    N/A
                                 </div>
                             @endif
                         </td>
-                        <td class="p-3 border-b">{{ $voter->voter_id }}</td>
 
+                        <td class="p-3 border-b">{{ $voter->voter_id }}</td>
                         <td class="p-3 border-b">{{ $voter->name }}</td>
                         <td class="p-3 border-b">{{ $voter->email }}</td>
                         <td class="p-3 border-b text-center">{{ $voter->skippedElectionsCount() }}</td>
 
+                        {{-- Eligibility --}}
+                    <td class="p-3 border-b">
+                        @if ($voter->is_eligible)
+                            <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+                                Eligible
+                            </span>
+                        @else
+                            <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                                Not Eligible
+                            </span>
 
-                        <td class="p-3 border-b">
-                            @if ($voter->is_eligible)
-                                <span
-                                    class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Eligible</span>
-                            @else
-                                <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">Not
-                                    Eligible</span>
-
-                                {{-- Show auto-flag note only if NOT eligible --}}
-                                @if ($voter->isAutoFlagged())
-                                    <div class="text-xs text-gray-500 mt-1">(Auto flagged due to skipped elections)</div>
-                                @endif
+                            @if ($voter->isAutoFlagged())
+                                <div class="text-xs text-gray-500 mt-1">(due to skipped elections)</div>
                             @endif
-                        </td>
+                        @endif
+                    </td>
+
 
                         {{-- Action --}}
                         <td class="p-3 border-b text-center">
@@ -74,7 +77,7 @@
                                 @method('PATCH')
                                 <button type="submit"
                                     class="px-3 py-1 text-sm rounded-lg text-white
-                                    {{ $voter->is_eligible ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}">
+                                            {{ $voter->is_eligible ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700' }}">
                                     {{ $voter->is_eligible ? 'Mark Not Eligible' : 'Mark Eligible' }}
                                 </button>
                             </form>

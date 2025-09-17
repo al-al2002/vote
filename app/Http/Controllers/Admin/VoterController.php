@@ -8,31 +8,41 @@ use Illuminate\Http\Request;
 
 class VoterController extends Controller
 {
-    // List voters
-    public function index(Request $request)
-    {
-        $query = User::where('role', 'voter');
+    /**
+     * List voters with optional eligibility filter.
+     */
+  public function index(Request $request)
+{
+    $query = User::where('role', 'voter');
 
-        if ($request->filled('eligible') && in_array($request->eligible, ['0', '1'])) {
-            $query->where('is_eligible', $request->eligible);
-        }
-
-        $voters = $query->paginate(10);
-        return view('admin.voters.index', compact('voters'));
+    // Filter if selected
+    if ($request->filled('eligible') && in_array($request->eligible, ['0', '1'])) {
+        $query->where('is_eligible', $request->eligible);
     }
 
-    // Toggle eligibility manually
-    public function toggle($id)
-    {
-        $voter = User::findOrFail($id);
+    $voters = $query->paginate(10);
 
-        if ($voter->role !== 'voter') {
-            return redirect()->back()->with('error', 'Only voters can be updated.');
-        }
+    return view('admin.voters.index', compact('voters'));
+}
 
-        $voter->is_eligible = !$voter->is_eligible;
-        $voter->save();
 
-        return redirect()->back()->with('success', 'Voter status updated successfully.');
+
+    /**
+     * Toggle voter eligibility manually.
+     */
+  public function toggle($id)
+{
+    $voter = User::findOrFail($id);
+
+    if ($voter->role !== 'voter') {
+        return redirect()->back()->with('error', 'Only voters can be updated.');
     }
+
+    $voter->is_eligible = !$voter->is_eligible;
+    $voter->save();
+
+    return redirect()->back()->with('success', 'Voter status updated successfully.');
+}
+
+
 }

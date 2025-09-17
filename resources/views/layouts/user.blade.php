@@ -92,6 +92,12 @@
                     class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition">
                     Results
                 </a>
+            {{-- Live Monitor --}}
+            <a href="{{ route('user.live-monitor') }}"
+               class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition">
+                Live Monitor
+            </a>
+
 
                 {{-- User Dropdown --}}
                 <div class="relative">
@@ -112,6 +118,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
+
 
                     {{-- Dropdown menu --}}
                     <div id="userMenu"

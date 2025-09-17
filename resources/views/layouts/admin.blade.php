@@ -160,6 +160,17 @@
                     </svg>
                     Results
                 </a>
+    <a href="{{ route('admin.live-monitor') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
+              {{ request()->routeIs('admin.live-monitor*') ? 'active' : '' }}">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6h6v6m-3-9V5m0 0L9 9m3-4l3 4" />
+        </svg>
+        Live Monitor
+    </a>
+
+
+
+
             </div>
         </nav>
 

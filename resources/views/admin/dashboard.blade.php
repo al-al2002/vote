@@ -12,25 +12,37 @@
 
 @section('content')
     {{-- Stats Section --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+
+    <div class="flex flex-wrap justify-between gap-6 mb-8">
+        {{-- Active Elections --}}
         <div
-            class="stat-card p-6 rounded-2xl shadow-xl border border-gray-100 bg-gradient-to-r from-blue-500 to-indigo-500 text-white transform hover:scale-105 transition duration-300">
+            class="flex-1 min-w-[200px] stat-card p-6 rounded-2xl shadow-xl border border-gray-100 bg-gradient-to-r from-blue-500 to-indigo-500 text-white transform hover:scale-105 transition duration-300">
             <p class="text-sm font-medium opacity-80">Active Elections</p>
             <p class="text-3xl font-bold mt-1">{{ $activeElections }}</p>
         </div>
 
+        {{-- Closed Elections --}}
         <div
-            class="stat-card p-6 rounded-2xl shadow-xl border border-gray-100 bg-gradient-to-r from-red-400 to-pink-500 text-white transform hover:scale-105 transition duration-300">
+            class="flex-1 min-w-[200px] stat-card p-6 rounded-2xl shadow-xl border border-gray-100 bg-gradient-to-r from-red-400 to-pink-500 text-white transform hover:scale-105 transition duration-300">
             <p class="text-sm font-medium opacity-80">Closed Elections</p>
             <p class="text-3xl font-bold mt-1">{{ $closedElections }}</p>
         </div>
 
+        {{-- Upcoming Elections --}}
         <div
-            class="stat-card p-6 rounded-2xl shadow-xl border border-gray-100 bg-gradient-to-r from-yellow-400 to-orange-500 text-white transform hover:scale-105 transition duration-300">
+            class="flex-1 min-w-[200px] stat-card p-6 rounded-2xl shadow-xl border border-gray-100 bg-gradient-to-r from-green-400 to-teal-500 text-white transform hover:scale-105 transition duration-300">
+            <p class="text-sm font-medium opacity-80">Upcoming Elections</p>
+            <p class="text-3xl font-bold mt-1">{{ $upcomingElections }}</p>
+        </div>
+
+        {{-- Total Voters --}}
+        <div
+            class="flex-1 min-w-[200px] stat-card p-6 rounded-2xl shadow-xl border border-gray-100 bg-gradient-to-r from-yellow-400 to-orange-500 text-white transform hover:scale-105 transition duration-300">
             <p class="text-sm font-medium opacity-80">Total Voters</p>
             <p class="text-3xl font-bold mt-1">{{ $totalVoters }}</p>
         </div>
     </div>
+
 
     {{-- Chart Filter --}}
     <div class="mb-4 flex items-center gap-2">

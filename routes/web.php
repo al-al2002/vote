@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ElectionController as AdminElectionController;
 use App\Http\Controllers\Admin\CandidateController;
 use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\ResultController;
+use App\Http\Controllers\Admin\LiveMonitorController;
 
 // User
 use App\Http\Controllers\User\DashboardController;
@@ -119,4 +120,19 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
     Route::patch('/voters/{voter}/toggle', [VoterController::class, 'toggle'])->name('voters.toggle');
 });
+
+//admin live monitor
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/live-monitor', [LiveMonitorController::class, 'index'])
+        ->name('live-monitor');
+
+    Route::get('/live-monitor/data', [LiveMonitorController::class, 'data'])
+        ->name('live-monitor.data');
+});
+
+//user live monitor
+Route::get('/user/live-monitor', [App\Http\Controllers\User\LiveMonitorController::class, 'index'])
+    ->name('user.live-monitor');
+
+
 

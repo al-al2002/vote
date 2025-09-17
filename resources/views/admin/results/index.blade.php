@@ -6,17 +6,11 @@
     <div class="container mx-auto">
         <h1 class="text-2xl font-bold mb-4">Election Results</h1>
 
-        {{-- Filter --}}
+        {{-- Filter (Locked to Closed) --}}
         <div class="mb-6">
-            <form method="GET" action="{{ route('admin.results') }}">
-                <select name="status" onchange="this.form.submit()" class="border rounded-lg px-3 py-2">
-                    <option value="">All</option>
-                    <option value="active" {{ ($statusFilter ?? request('status')) === 'active' ? 'selected' : '' }}>Active
-                    </option>
-                    <option value="upcoming" {{ ($statusFilter ?? request('status')) === 'upcoming' ? 'selected' : '' }}>
-                        Upcoming</option>
-                    <option value="closed" {{ ($statusFilter ?? request('status')) === 'closed' ? 'selected' : '' }}>Closed
-                    </option>
+            <form>
+                <select class="border rounded-lg px-3 py-2 bg-gray-100 text-gray-600 cursor-not-allowed" disabled>
+                    <option value="closed" selected>Closed</option>
                 </select>
             </form>
         </div>
@@ -31,10 +25,7 @@
                 {{-- Status --}}
                 <p>
                     Status:
-                    <span
-                        class="{{ $election->isClosed() ? 'text-red-600' : ($election->isActive() ? 'text-green-600' : 'text-yellow-600') }}">
-                        {{ $election->isClosed() ? 'Closed' : ($election->isActive() ? 'Active' : 'Upcoming') }}
-                    </span>
+                    <span class="text-red-600">Closed</span>
                 </p>
 
                 {{-- Total Votes --}}
@@ -44,20 +35,16 @@
                 <p class="mt-1"><strong>Total Votes:</strong> {{ $totalVotes }}</p>
 
                 {{-- Winners --}}
-                @if($election->isClosed())
-                    @php $winners = $election->winners(); @endphp
-                    <h4 class="mt-2 font-semibold">Winner{{ $winners->count() > 1 ? 's' : '' }}:</h4>
-                    @if($winners->isNotEmpty())
-                        <ul class="list-disc list-inside text-yellow-600 font-bold">
-                            @foreach($winners as $winner)
-                                <li>🎉 {{ $winner->name }} ({{ $winner->votes_count }} votes)</li>
-                            @endforeach
-                        </ul>
-                    @else
-                        <p>No votes were cast.</p>
-                    @endif
+                @php $winners = $election->winners(); @endphp
+                <h4 class="mt-2 font-semibold">Winner{{ $winners->count() > 1 ? 's' : '' }}:</h4>
+                @if($winners->isNotEmpty())
+                    <ul class="list-disc list-inside text-yellow-600 font-bold">
+                        @foreach($winners as $winner)
+                            <li>🎉 {{ $winner->name }} ({{ $winner->votes_count }} votes)</li>
+                        @endforeach
+                    </ul>
                 @else
-                    @php $winners = collect(); @endphp
+                    <p>No votes were cast.</p>
                 @endif
 
                 {{-- Candidates Table --}}
@@ -91,7 +78,7 @@
             </div>
         @empty
             <div class="bg-red-100 text-red-600 p-4 rounded-lg shadow text-center">
-                <p>No elections found for this filter.</p>
+                <p>No closed elections found.</p>
             </div>
         @endforelse
     </div>

@@ -25,9 +25,13 @@ class AdminDashboardController extends Controller
             ->when($statusFilter && $statusFilter !== 'closed', fn($q) => $q->whereRaw('0'), fn($q) => $q)
             ->count();
 
+        $upcomingElections = Election::where('start_date', '>', $now)
+            ->when($statusFilter && $statusFilter !== 'upcoming', fn($q) => $q->whereRaw('0'), fn($q) => $q)
+            ->count();
+
         $totalVoters = User::where('role', 'voter')->count();
 
-        // Chart data (only active + closed elections)
+        // Chart data (active + closed elections)
         $elections = Election::withCount('votes')
             ->when($statusFilter === 'active', fn($q) => $q->where('start_date', '<=', $now)->where('end_date', '>=', $now))
             ->when($statusFilter === 'closed', fn($q) => $q->where('end_date', '<', $now))
@@ -39,6 +43,7 @@ class AdminDashboardController extends Controller
         return view('admin.dashboard', compact(
             'activeElections',
             'closedElections',
+            'upcomingElections', // <--- pass to the view
             'totalVoters',
             'chartLabels',
             'chartData'

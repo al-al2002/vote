@@ -39,8 +39,10 @@ class User extends Authenticatable
     }
 
     // Check if voter should be auto-flagged visually
-    public function isAutoFlagged()
-    {
-        return $this->skippedElectionsCount() >= 3;
-    }
+
+public function isAutoFlagged()
+{
+    return $this->skippedElectionsCount() >= 3;
+}
+
 }

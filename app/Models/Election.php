@@ -23,7 +23,7 @@ class Election extends Model
         'end_date'   => 'datetime',
     ];
 
-    /* ----------------------- Relationships ----------------------- */
+
 
     public function candidates()
     {
@@ -35,7 +35,7 @@ class Election extends Model
         return $this->hasMany(Vote::class);
     }
 
-    /* ----------------------- Status Helpers ----------------------- */
+
 
     public function isActive(): bool
     {
@@ -53,19 +53,14 @@ class Election extends Model
         return $this->end_date < Carbon::now();
     }
 
-    /* ----------------------- Winner Helpers ----------------------- */
 
-    /**
-     * Return the candidate(s) with the highest votes.
-     * Supports ties.
-     */
+
     public function winners()
     {
         if (!$this->isClosed()) {
-            return collect(); // Empty collection if election is not closed
+            return collect();
         }
 
-        // Ensure candidates are loaded with votes count
         $candidates = $this->candidates()->withCount('votes')->get();
 
         if ($candidates->isEmpty()) {
@@ -77,9 +72,6 @@ class Election extends Model
         return $candidates->where('votes_count', $maxVotes);
     }
 
-    /**
-     * Return a single winner (first in case of tie)
-     */
     public function winner()
     {
         return $this->winners()->first();
