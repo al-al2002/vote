@@ -16,8 +16,10 @@ class VoterController extends Controller
     }
 
     // Toggle voter eligibility
-    public function toggleEligibility(User $user)
+    public function toggleEligibility($id)
     {
+        $user = User::findOrFail($id);
+
         if ($user->role !== 'voter') {
             return redirect()->back()->with('error', 'Only voters can be updated.');
         }

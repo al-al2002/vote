@@ -23,7 +23,12 @@
             <select name="election_id" class="w-full border rounded-lg px-3 py-2" required>
                 <option value="">-- Select Election --</option>
                 @foreach($elections as $election)
-                    <option value="{{ $election->id }}">{{ $election->title }}</option>
+                    @php
+                        $isClosed = \Carbon\Carbon::now()->gt($election->end_date);
+                    @endphp
+                    <option value="{{ $election->id }}" {{ $isClosed ? 'disabled' : '' }}>
+                        {{ $election->title }} {{ $isClosed ? '(Closed)' : '' }}
+                    </option>
                 @endforeach
             </select>
         </div>

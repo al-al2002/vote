@@ -13,7 +13,7 @@ class AdminDashboardController extends Controller
     {
         $now = Carbon::now();
 
-        // Counts only
+        // Counts
         $activeElections = Election::where('start_date', '<=', $now)
             ->where('end_date', '>=', $now)
             ->count();
@@ -24,11 +24,18 @@ class AdminDashboardController extends Controller
 
         $totalVoters = User::where('role', 'voter')->count();
 
+        // Dynamic chart data: fetch all elections with vote counts
+        $elections = Election::withCount('votes')->get();
+        $chartLabels = $elections->pluck('title'); // Election names
+        $chartData = $elections->pluck('votes_count'); // Votes per election
+
         return view('admin.dashboard', compact(
             'activeElections',
             'upcomingElections',
             'closedElections',
-            'totalVoters'
+            'totalVoters',
+            'chartLabels',
+            'chartData'
         ));
     }
 }

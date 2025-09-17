@@ -10,11 +10,17 @@ use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
 {
+    /**
+     * Show the registration form.
+     */
     public function showRegisterForm()
     {
         return view('auth.register');
     }
 
+    /**
+     * Handle registration request.
+     */
     public function register(Request $request)
     {
         // Validate input
@@ -23,44 +29,27 @@ class RegisterController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'voter_id' => ['required', 'string', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'agree' => ['accepted'],
+        ], [
+            'password.confirmed' => 'Password and Confirm Password do not match.',
+            'agree.accepted' => 'You must agree to the terms and conditions.',
         ]);
 
-        // Create user
+        // Create user with default role 'voter'
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'voter_id' => $request->voter_id,
             'password' => Hash::make($request->password),
-            'role' => 'user', // Default role
+            'role' => 'voter',
         ]);
 
-        // Log in automatically
+        // Log in the user automatically
         Auth::login($user);
 
-        // Redirect based on role
+        // Redirect to dashboard based on role
         return $user->role === 'admin'
             ? redirect()->route('admin.dashboard')
             : redirect()->route('user.dashboard');
     }
-    protected function redirectTo()
-    {
-        if (auth()->user()->role === 'admin') {
-            return '/admin/dashboard';
-        }
-        return '/user/dashboard';
-    }
-    protected function create(array $data)
-    {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'voter_id' => $data['voter_id'],
-            'password' => Hash::make($data['password']),
-            'role' => 'user', // always user for registration
-        ]);
-    }
-
-
-    protected $redirectTo = '/user/dashboard';
-
 }

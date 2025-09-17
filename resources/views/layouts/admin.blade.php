@@ -14,13 +14,13 @@
             font-family: 'Inter', sans-serif;
         }
 
-        /* Sidebar color updated */
         .sidebar-gradient {
             background: linear-gradient(180deg, #09182D 0%, #0F223A 50%, #1A3554 100%);
         }
 
         .menu-item {
             transition: all 0.3s;
+            position: relative;
         }
 
         .menu-item:hover {
@@ -30,23 +30,26 @@
 
         .menu-item.active {
             background: rgba(255, 255, 255, 0.15);
-            border-right: 4px solid #fbbf24;
         }
 
-        .notification-badge {
-            animation: pulse 2s infinite;
+        /* Orange corner triangle for active menu item */
+        .menu-item.active::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-top: 40px solid #f59e0b;
+            /* orange color */
+            border-left: 40px solid transparent;
+            border-radius: 0 8px 0 0;
+            z-index: 1;
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.7;
-            }
+        .sidebar-scroll {
+            overflow-y: auto;
+            flex-grow: 1;
         }
 
         .content-area {
@@ -60,11 +63,6 @@
 
         .stat-card {
             background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-        }
-
-        .sidebar-scroll {
-            overflow-y: auto;
-            flex-grow: 1;
         }
     </style>
 </head>
@@ -116,32 +114,44 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                    </svg> Dashboard
+                    </svg>
+                    Dashboard
                 </a>
 
-                <a href="{{ route('admin.elections.index') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg">
+                <a href="{{ route('admin.elections.index') }}"
+                    class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.elections.*')) active @endif">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2z"></path>
-                    </svg> Elections
+                    </svg>
+                    Elections
                 </a>
 
-            <a href="{{ route('admin.candidates.index') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
-                      @if(request()->routeIs('admin.candidates.*')) active @endif">
+                <a href="{{ route('admin.candidates.index') }}"
+                    class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.candidates.*')) active @endif">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z">
                         </path>
-                    </svg> Candidates
-                </a>
-                <a href="{{ route('admin.voters') }}"
-                    class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.voters.*')) active @endif">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg> Manage Voters
+                    </svg>
+                    Candidates
                 </a>
 
+            <a href="{{ route('admin.voters') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
+               @if(request()->routeIs('admin.voters') || request()->routeIs('admin.voters.*')) active @endif">
+                ...
+                Manage Voters
+            </a>
+
+                <a href="{{ route('admin.results') }}"
+                    class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.results')) active @endif">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-6h6v6m-3-9V5m0 0L9 9m3-4l3 4">
+                        </path>
+                    </svg>
+                    Results
+                </a>
             </div>
         </nav>
 
@@ -154,7 +164,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
                         </path>
-                    </svg> Logout
+                    </svg>
+                    Logout
                 </button>
             </form>
         </div>

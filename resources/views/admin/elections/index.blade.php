@@ -58,13 +58,11 @@
                         <a href="{{ route('admin.elections.edit', $election->id) }}"
                             class="bg-yellow-500 text-white px-3 py-1 rounded">Edit</a>
 
-                        <form action="{{ route('admin.elections.destroy', $election->id) }}" method="POST"
-                            onsubmit="return confirm('Are you sure you want to delete this election?')">
+                        <form class="delete-election-form" action="{{ route('admin.elections.destroy', $election->id) }}"
+                            method="POST">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded">
-                                Delete
-                            </button>
+                            <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -75,4 +73,28 @@
             @endforelse
         </tbody>
     </table>
+
+    {{-- SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.querySelectorAll('.delete-election-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This election will be permanently deleted!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
 @endsection

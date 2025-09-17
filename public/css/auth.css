@@ -1,0 +1,110 @@
+/* === Body & Background === */
+body {
+    background: url("../images/vote.jpg") no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+
+/* === Card Styling === */
+.card {
+    border-radius: 20px;
+    max-width: 420px;
+    width: 100%;
+    background: rgba(10, 25, 47, 0.95);
+    /* solid background */
+    border: 2px solid rgba(0, 255, 255, 0.6);
+    box-shadow: 0px 0px 25px rgba(0, 255, 255, 0.6);
+}
+
+.card h3 {
+    color: #00eaff;
+    text-shadow: 0 0 10px #00eaff;
+}
+
+.card p {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* === Inputs === */
+input.form-control {
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 255, 255, 0.4);
+    color: #fff;
+}
+
+input.form-control:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #00eaff;
+    box-shadow: 0 0 10px #00eaff;
+    color: #fff;
+}
+
+::placeholder {
+    color: #9bbcd1 !important;
+}
+
+.position-absolute {
+    color: #00eaff !important;
+}
+
+/* === Nav Tabs === */
+.nav-link {
+    border-radius: 10px 10px 0 0;
+    color: #9bbcd1;
+    font-weight: bold;
+    background: transparent;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.nav-link.active {
+    color: #00eaff !important;
+    background: rgba(0, 255, 255, 0.15);
+    border-bottom: 2px solid #00eaff;
+    box-shadow: 0px 0px 15px rgba(0, 255, 255, 0.5);
+}
+
+/* === Buttons === */
+.btn-primary,
+.btn-success {
+    border-radius: 30px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #00eaff, #007bff);
+    border: none;
+    box-shadow: 0px 0px 20px rgba(0, 234, 255, 0.7);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover,
+.btn-success:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 0px 30px rgba(0, 234, 255, 1);
+}
+
+/* === Links === */
+a {
+    color: #00eaff;
+    transition: 0.3s;
+}
+
+a:hover {
+    color: #00ffff;
+    text-shadow: 0 0 8px #00eaff;
+}
+
+.form-check-label a {
+    color: #00eaff;
+}
+
+/* === SweetAlert Neon Popup === */
+.swal2-popup {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.swal2-neon-popup {
+    box-shadow: 0 0 20px #00eaff, 0 0 40px #00eaff, 0 0 60px #00eaff;
+    border: 1px solid #00eaff;
+    border-radius: 12px;
+}
