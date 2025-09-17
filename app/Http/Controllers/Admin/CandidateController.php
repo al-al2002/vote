@@ -12,31 +12,46 @@ use Carbon\Carbon;
 class CandidateController extends Controller
 {
     /**
-     * Display a listing of candidates with optional election filter (AJAX ready).
+     * Display a listing of candidates with optional election filter.
      */
-    public function index(Request $request)
-    {
-        $elections = Election::all();
-        $query = Candidate::with('election');
+  public function index(Request $request)
+{
+    $elections = Election::all(); // For dropdown
+    $query = Candidate::with('election');
 
-        if ($request->filled('election_id')) {
-            $query->where('election_id', $request->election_id);
-        }
+    // Filter by election status
+    if ($request->filled('status')) {
+        $status = $request->status;
+        $now = now();
 
-        $candidates = $query->get();
-
-        if ($request->ajax()) {
-            return view('admin.candidates.partials.candidates_table', compact('candidates'))->render();
-        }
-
-        return view('admin.candidates.index', compact('candidates', 'elections'));
+        $query->whereHas('election', function($q) use ($status, $now) {
+            if ($status === 'active') {
+                $q->where('start_date', '<=', $now)
+                  ->where('end_date', '>=', $now);
+            } elseif ($status === 'upcoming') {
+                $q->where('start_date', '>', $now);
+            } elseif ($status === 'closed') {
+                $q->where('end_date', '<', $now);
+            }
+        });
     }
+
+    // Filter by specific election
+    if ($request->filled('election_id')) {
+        $query->where('election_id', $request->election_id);
+    }
+
+    $candidates = $query->get();
+
+    return view('admin.candidates.index', compact('candidates', 'elections'));
+}
 
     /**
      * Show the form for creating a new candidate.
      */
     public function create()
     {
+        // Only elections that are not closed
         $elections = Election::where('end_date', '>', Carbon::now())->get();
         return view('admin.candidates.create', compact('elections'));
     }
@@ -47,10 +62,10 @@ class CandidateController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
+            'position'    => 'required|string|max:255',
             'election_id' => 'required|exists:elections,id',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $election = Election::findOrFail($request->election_id);
@@ -67,7 +82,8 @@ class CandidateController extends Controller
 
         Candidate::create($data);
 
-        return redirect()->route('admin.candidates.index')->with('success', 'Candidate added successfully.');
+        return redirect()->route('admin.candidates.index')
+                         ->with('delete_success', 'Candidate added successfully!');
     }
 
     /**
@@ -85,10 +101,10 @@ class CandidateController extends Controller
     public function update(Request $request, Candidate $candidate)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
+            'position'    => 'required|string|max:255',
             'election_id' => 'required|exists:elections,id',
-            'photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $election = Election::findOrFail($request->election_id);
@@ -99,18 +115,18 @@ class CandidateController extends Controller
 
         $data = $request->only(['name', 'position', 'election_id']);
 
+        // Replace photo if uploaded
         if ($request->hasFile('photo')) {
-            // Delete old photo if it exists
             if ($candidate->photo && Storage::disk('public')->exists($candidate->photo)) {
                 Storage::disk('public')->delete($candidate->photo);
             }
-            // Store new photo
             $data['photo'] = $request->file('photo')->store('candidates', 'public');
         }
 
         $candidate->update($data);
 
-        return redirect()->route('admin.candidates.index')->with('success', 'Candidate updated successfully.');
+        return redirect()->route('admin.candidates.index')
+                         ->with('delete_success', 'Candidate updated successfully!');
     }
 
     /**
@@ -124,6 +140,7 @@ class CandidateController extends Controller
 
         $candidate->delete();
 
-        return redirect()->route('admin.candidates.index')->with('success', 'Candidate deleted successfully.');
+        return redirect()->route('admin.candidates.index')
+                         ->with('delete_success', 'Candidate deleted successfully!');
     }
 }

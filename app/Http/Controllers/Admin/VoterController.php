@@ -8,24 +8,30 @@ use Illuminate\Http\Request;
 
 class VoterController extends Controller
 {
-    // Show all voters
-    public function index()
+    // List voters
+    public function index(Request $request)
     {
-        $voters = User::where('role', 'voter')->paginate(10);
-        return view('admin.voters', compact('voters'));
+        $query = User::where('role', 'voter');
+
+        if ($request->filled('eligible') && in_array($request->eligible, ['0', '1'])) {
+            $query->where('is_eligible', $request->eligible);
+        }
+
+        $voters = $query->paginate(10);
+        return view('admin.voters.index', compact('voters'));
     }
 
-    // Toggle voter eligibility
-    public function toggleEligibility($id)
+    // Toggle eligibility manually
+    public function toggle($id)
     {
-        $user = User::findOrFail($id);
+        $voter = User::findOrFail($id);
 
-        if ($user->role !== 'voter') {
+        if ($voter->role !== 'voter') {
             return redirect()->back()->with('error', 'Only voters can be updated.');
         }
 
-        $user->is_eligible = !$user->is_eligible;
-        $user->save();
+        $voter->is_eligible = !$voter->is_eligible;
+        $voter->save();
 
         return redirect()->back()->with('success', 'Voter status updated successfully.');
     }

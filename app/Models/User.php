@@ -16,24 +16,31 @@ class User extends Authenticatable
         'voter_id',
         'password',
         'role',
-         'is_eligible',
+        'is_eligible',
         'has_voted',
-    ];
-
-    protected $hidden = [
-        'password',
-        'remember_token',
+        'profile_photo',
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'is_eligible' => 'boolean',
+        'has_voted' => 'boolean',
     ];
 
-    /**
-     * A user can cast many votes
-     */
     public function votes()
     {
         return $this->hasMany(Vote::class);
+    }
+
+    public function skippedElectionsCount()
+    {
+        $total = \App\Models\Election::count();
+        $voted = $this->votes()->distinct('election_id')->count();
+        return $total - $voted;
+    }
+
+    // Check if voter should be auto-flagged visually
+    public function isAutoFlagged()
+    {
+        return $this->skippedElectionsCount() >= 3;
     }
 }

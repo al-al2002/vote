@@ -1,17 +1,28 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+
+// ----------------------
+// Controllers
+// ----------------------
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Admin\VoterController;
+
+// Admin
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ElectionController as AdminElectionController;
 use App\Http\Controllers\Admin\CandidateController;
+use App\Http\Controllers\Admin\VoterController;
 use App\Http\Controllers\Admin\ResultController;
-use App\Http\Controllers\User\ElectionController as UserElectionController;
+
+// User
 use App\Http\Controllers\User\DashboardController;
-use App\Http\Controllers\Admin\ElectionController;
+use App\Http\Controllers\User\ElectionController as UserElectionController;
+use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\PasswordController;
+use App\Http\Controllers\User\VoteHistoryController;
+use App\Http\Controllers\User\ResultController as UserResultController;
 
 // ----------------------
 // Authentication Routes
@@ -26,7 +37,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // ----------------------
 // Admin Routes
 // ----------------------
-Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -37,9 +48,9 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     // Candidates CRUD
     Route::resource('candidates', CandidateController::class);
 
-    // Voters Management
-    Route::get('/voters', [VoterController::class, 'index'])->name('voters');
-    Route::patch('/voters/{user}/toggle', [VoterController::class, 'toggleEligibility'])->name('voters.toggle');
+    // Voters
+    Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
+    Route::patch('/voters/{voter}/toggle', [VoterController::class, 'toggle'])->name('voters.toggle');
 
     // Results
     Route::get('/results', [ResultController::class, 'index'])->name('results');
@@ -48,7 +59,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 // ----------------------
 // User Routes
 // ----------------------
-Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
+Route::prefix('user')->name('user.')->middleware(['auth'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -57,34 +68,55 @@ Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::get('/elections', [UserElectionController::class, 'index'])->name('elections.index');
     Route::get('/elections/{election}', [UserElectionController::class, 'show'])->name('elections.show');
     Route::post('/elections/{election}/vote', [UserElectionController::class, 'vote'])->name('elections.vote');
-});
-Route::middleware(['auth','isAdmin'])->prefix('admin')->name('admin.')->group(function () {
-    // ... other admin routes
 
-    // results page
-    Route::get('/results', [ElectionController::class, 'results'])->name('results');
-});
+    // Results
+    Route::get('/results', [UserResultController::class, 'index'])->name('results.index');
 
-Route::prefix('user')->middleware(['auth'])->group(function () {
-    Route::get('/results', [App\Http\Controllers\User\ResultController::class, 'index'])
-        ->name('user.results.index');
-});
+    // Vote History (AJAX)
+    Route::get('/voting-history', function (Request $request) {
+        $user = $request->user();
 
+        if (!$user) {
+            return response()->json([
+                'error' => 'Not logged in',
+                'votes' => []
+            ], 401);
+        }
 
-Route::get('/user/voting-history', function (Request $request) {
-    $user = $request->user();
-
-    if (!$user) {
         return response()->json([
-            'error' => 'Not logged in',
-            'votes' => []
-        ], 401);
-    }
+            'votes' => $user->votes()->with('election')->latest()->get()
+        ]);
+    })->name('voting.history');
+});
 
-    return response()->json([
-        'votes' => $user->votes()->with('election')->latest()->get()
-    ]);
-})->name('user.voting.history')->middleware('auth');
+// ----------------------
+// Profile & Settings Routes
+// ----------------------
+Route::middleware(['auth'])->group(function () {
 
-Route::patch('/admin/voters/{id}/toggle', [App\Http\Controllers\Admin\VoterController::class, 'toggleEligibility'])
-    ->name('admin.voters.toggle');
+    // Profile
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Settings page
+    Route::get('/profile/settings', function () {
+        return view('user.profile.settings');
+    })->name('profile.settings');
+
+    // Change Password
+    Route::get('/profile/password/change', [PasswordController::class, 'edit'])->name('password.change');
+    Route::post('/profile/password/change', [PasswordController::class, 'update'])->name('password.update');
+});
+
+// ----------------------
+// Additional User Vote History Route (AJAX endpoint)
+// ----------------------
+Route::middleware(['auth'])->get('/user/votes/history', [VoteHistoryController::class, 'fetch'])->name('user.votes.history');
+
+
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
+    Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
+    Route::patch('/voters/{voter}/toggle', [VoterController::class, 'toggle'])->name('voters.toggle');
+});
+

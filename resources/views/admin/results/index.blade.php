@@ -6,27 +6,29 @@
     <div class="container mx-auto">
         <h1 class="text-2xl font-bold mb-4">Election Results</h1>
 
-        {{-- 🔎 Filter Dropdown --}}
+        {{-- Filter --}}
         <div class="mb-6">
             <form method="GET" action="{{ route('admin.results') }}">
                 <select name="status" onchange="this.form.submit()" class="border rounded-lg px-3 py-2">
                     <option value="">All</option>
-                    <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="upcoming" {{ request('status') === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
-                    <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
+                    <option value="active" {{ ($statusFilter ?? request('status')) === 'active' ? 'selected' : '' }}>Active
+                    </option>
+                    <option value="upcoming" {{ ($statusFilter ?? request('status')) === 'upcoming' ? 'selected' : '' }}>
+                        Upcoming</option>
+                    <option value="closed" {{ ($statusFilter ?? request('status')) === 'closed' ? 'selected' : '' }}>Closed
+                    </option>
                 </select>
             </form>
         </div>
 
-        {{-- Elections List --}}
+        {{-- Elections --}}
         @forelse($elections as $election)
             <div class="bg-white p-4 rounded-lg shadow mb-6">
-                {{-- Election Name --}}
-                <h2 class="text-2xl font-bold mb-2 text-blue-600">
-                    {{ $election->title }}
-                </h2>
 
-                {{-- Election Status --}}
+                {{-- Election Title --}}
+                <h2 class="text-2xl font-bold mb-2 text-blue-600">{{ $election->title }}</h2>
+
+                {{-- Status --}}
                 <p>
                     Status:
                     <span
@@ -36,27 +38,29 @@
                 </p>
 
                 {{-- Total Votes --}}
-                <p class="mt-1">
-                    <strong>Total Votes:</strong> {{ $election->total_votes ?? 0 }}
-                </p>
+                @php
+                    $totalVotes = $election->candidates->sum('votes_count');
+                @endphp
+                <p class="mt-1"><strong>Total Votes:</strong> {{ $totalVotes }}</p>
 
-                {{-- Winner(s) --}}
+                {{-- Winners --}}
                 @if($election->isClosed())
-                    <h4 class="mt-2 font-semibold">
-                        Winner{{ ($election->winners->count() ?? 0) > 1 ? 's' : '' }}:
-                    </h4>
-                    @if(($election->winners->count() ?? 0) > 0)
+                    @php $winners = $election->winners(); @endphp
+                    <h4 class="mt-2 font-semibold">Winner{{ $winners->count() > 1 ? 's' : '' }}:</h4>
+                    @if($winners->isNotEmpty())
                         <ul class="list-disc list-inside text-yellow-600 font-bold">
-                            @foreach($election->winners as $winner)
-                                <li>🎉 {{ $winner->name }} ({{ $winner->votes_count ?? 0 }} votes)</li>
+                            @foreach($winners as $winner)
+                                <li>🎉 {{ $winner->name }} ({{ $winner->votes_count }} votes)</li>
                             @endforeach
                         </ul>
                     @else
                         <p>No votes were cast.</p>
                     @endif
+                @else
+                    @php $winners = collect(); @endphp
                 @endif
 
-                {{-- Candidates --}}
+                {{-- Candidates Table --}}
                 <h4 class="mt-4 font-semibold">Candidates:</h4>
                 <table class="min-w-full mt-2 border border-gray-200">
                     <thead>
@@ -67,9 +71,9 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @php $winnerIds = $winners->pluck('id')->toArray(); @endphp
                         @foreach($election->candidates as $candidate)
-                            <tr @if(($election->winners->count() ?? 0) > 0 && $election->winners->contains('id', $candidate->id))
-                            class="bg-yellow-100 font-bold" @endif>
+                            <tr @if(in_array($candidate->id, $winnerIds)) class="bg-yellow-100 font-bold" @endif>
                                 <td class="px-4 py-2 border">
                                     @if($candidate->photo)
                                         <img src="{{ asset('storage/' . $candidate->photo) }}" alt="{{ $candidate->name }}"
@@ -86,7 +90,6 @@
                 </table>
             </div>
         @empty
-            {{-- 🚨 Show message if no elections found --}}
             <div class="bg-red-100 text-red-600 p-4 rounded-lg shadow text-center">
                 <p>No elections found for this filter.</p>
             </div>

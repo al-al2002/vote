@@ -6,32 +6,38 @@ use App\Http\Controllers\Controller;
 use App\Models\Election;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $statusFilter = $request->query('status'); // active / closed / null
         $now = Carbon::now();
 
-        // Counts
+        // Stats
         $activeElections = Election::where('start_date', '<=', $now)
             ->where('end_date', '>=', $now)
+            ->when($statusFilter && $statusFilter !== 'active', fn($q) => $q->whereRaw('0'), fn($q) => $q)
             ->count();
 
-        $upcomingElections = Election::where('start_date', '>', $now)->count();
-
-        $closedElections = Election::where('end_date', '<', $now)->count();
+        $closedElections = Election::where('end_date', '<', $now)
+            ->when($statusFilter && $statusFilter !== 'closed', fn($q) => $q->whereRaw('0'), fn($q) => $q)
+            ->count();
 
         $totalVoters = User::where('role', 'voter')->count();
 
-        // Dynamic chart data: fetch all elections with vote counts
-        $elections = Election::withCount('votes')->get();
-        $chartLabels = $elections->pluck('title'); // Election names
-        $chartData = $elections->pluck('votes_count'); // Votes per election
+        // Chart data (only active + closed elections)
+        $elections = Election::withCount('votes')
+            ->when($statusFilter === 'active', fn($q) => $q->where('start_date', '<=', $now)->where('end_date', '>=', $now))
+            ->when($statusFilter === 'closed', fn($q) => $q->where('end_date', '<', $now))
+            ->get();
+
+        $chartLabels = $elections->pluck('title');
+        $chartData = $elections->pluck('votes_count');
 
         return view('admin.dashboard', compact(
             'activeElections',
-            'upcomingElections',
             'closedElections',
             'totalVoters',
             'chartLabels',

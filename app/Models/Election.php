@@ -18,17 +18,13 @@ class Election extends Model
         'status',
     ];
 
-    // Casts for automatic Carbon instances
     protected $casts = [
         'start_date' => 'datetime',
         'end_date'   => 'datetime',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
+    /* ----------------------- Relationships ----------------------- */
+
     public function candidates()
     {
         return $this->hasMany(Candidate::class);
@@ -39,11 +35,8 @@ class Election extends Model
         return $this->hasMany(Vote::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Status Helpers
-    |--------------------------------------------------------------------------
-    */
+    /* ----------------------- Status Helpers ----------------------- */
+
     public function isActive(): bool
     {
         $now = Carbon::now();
@@ -60,22 +53,35 @@ class Election extends Model
         return $this->end_date < Carbon::now();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Custom Attributes
-    |--------------------------------------------------------------------------
-    */
+    /* ----------------------- Winner Helpers ----------------------- */
 
-    // Get the winner candidate (only works if closed and votes exist)
-    public function getWinnerAttribute()
+    /**
+     * Return the candidate(s) with the highest votes.
+     * Supports ties.
+     */
+    public function winners()
     {
         if (!$this->isClosed()) {
-            return null;
+            return collect(); // Empty collection if election is not closed
         }
 
-        return $this->candidates()
-            ->withCount('votes')
-            ->orderByDesc('votes_count')
-            ->first();
+        // Ensure candidates are loaded with votes count
+        $candidates = $this->candidates()->withCount('votes')->get();
+
+        if ($candidates->isEmpty()) {
+            return collect();
+        }
+
+        $maxVotes = $candidates->max('votes_count');
+
+        return $candidates->where('votes_count', $maxVotes);
+    }
+
+    /**
+     * Return a single winner (first in case of tie)
+     */
+    public function winner()
+    {
+        return $this->winners()->first();
     }
 }

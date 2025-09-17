@@ -74,27 +74,61 @@
         </tbody>
     </table>
 
-    {{-- SweetAlert2 --}}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        document.querySelectorAll('.delete-election-form').forEach(form => {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "This election will be permanently deleted!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
-                });
+   {{-- SweetAlert2 --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Delete confirmation for elections
+    document.querySelectorAll('.delete-election-form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This election will be permanently deleted!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
             });
         });
-    </script>
+    });
+
+    // Success / Error popups for create, update, or delete
+    document.addEventListener('DOMContentLoaded', function () {
+        @if(session('success'))
+            setTimeout(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: "{{ session('success') }}",
+                    timer: 1000,          // Display for 1 second
+                    showConfirmButton: false,
+                    position: 'top-end',  // Top-right corner
+                    toast: true
+                });
+            }, 200); // 0.2 second delay
+        @endif
+
+        @if(session('error'))
+            setTimeout(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: "{{ session('error') }}",
+                    timer: 1000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true
+                });
+            }, 200);
+        @endif
+    });
+</script>
+
 @endsection
