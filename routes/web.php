@@ -73,7 +73,7 @@ Route::prefix('user')->name('user.')->middleware(['auth'])->group(function () {
     // Results
     Route::get('/results', [UserResultController::class, 'index'])->name('results.index');
 
-    // Vote History (AJAX)
+    // Vote History
     Route::get('/voting-history', function (Request $request) {
         $user = $request->user();
 
