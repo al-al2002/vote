@@ -5,83 +5,54 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class VoterController extends Controller
 {
-    /**
-     * Display voters with pagination.
-     */
+    // List voters with filter
     public function index(Request $request)
     {
-        $query = User::where('role', 'voter'); // ✅ only voters
+        $query = User::where('role', 'voter')
+          ->orderBy('created_at', 'DESC');
 
-        if ($request->has('eligible') && $request->eligible !== '') {
-            $eligible = $request->eligible == 1;
+        $voters = $query->get()->filter(function ($voter) use ($request) {
+            if ($request->filter === 'eligible') {
+                return $voter->finalEligibility();
+            } elseif ($request->filter === 'not_eligible') {
+                return !$voter->finalEligibility();
+            }
+            return true;
+        });
 
-            // ✅ Need collection here because finalEligibility() is computed
-            $voters = $query->get()->filter(function ($voter) use ($eligible) {
-                return $voter->finalEligibility() == $eligible;
-            });
-
-            // ✅ Manually paginate
-            $voters = $voters->forPage($request->get('page', 1), 10);
-        } else {
-            $voters = $query->paginate(10);
-        }
+        // Manual pagination
+        $page = $request->get('page', 1);
+        $perPage = 10;
+        $paginated = new LengthAwarePaginator(
+            $voters->forPage($page, $perPage),
+            $voters->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         return view('admin.voters.index', [
-            'voters' => $voters
+            'voters' => $paginated,
         ]);
     }
 
-    /**
-     * Toggle voter eligibility (manual override).
-     */
+    // Toggle voter eligibility (admin override)
     public function toggleEligibility($id)
     {
         $voter = User::findOrFail($id);
 
-        if (is_null($voter->admin_override)) {
-            // First time → flip whatever auto says
-            $voter->admin_override = !$voter->finalEligibility();
-        } else {
-            // Flip admin override
-            $voter->admin_override = !$voter->admin_override;
-        }
+        // Flip only the override status
+        $newStatus = !$voter->is_eligible;
 
-        $voter->save();
+        $voter->overrideEligibility($newStatus);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Voter eligibility updated successfully!'
-        ]);
-    }
-
-    public function markEligible($id)
-    {
-        $voter = User::findOrFail($id);
-        $voter->manual_eligibility = 1;
-        $voter->save();
-
-        return redirect()->back()->with('success', 'Voter marked as eligible.');
-    }
-
-    public function markNotEligible($id)
-    {
-        $voter = User::findOrFail($id);
-        $voter->manual_eligibility = 0;
-        $voter->save();
-
-        return redirect()->back()->with('success', 'Voter marked as not eligible.');
-    }
-
-    public function resetEligibility($id)
-    {
-        $voter = User::findOrFail($id);
-        $voter->manual_eligibility = null;
-        $voter->admin_override = null; // ✅ reset both
-        $voter->save();
-
-        return redirect()->back()->with('success', 'Voter eligibility reset to automatic rules.');
+        return redirect()->back()->with('success', 'Voter eligibility updated successfully!');
     }
 }

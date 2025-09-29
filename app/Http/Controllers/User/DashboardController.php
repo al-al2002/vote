@@ -30,9 +30,10 @@ class DashboardController extends Controller
         // Closed elections: end date in the past
         $closedElectionsList = Election::where('end_date', '<', $now)->get();
 
-        // Skipped elections: ended but user did not vote
+        // Skipped elections: ended after user registered but user did not vote
         $userVoteIds = $user->votes->pluck('election_id')->toArray();
         $skippedElectionsList = Election::where('end_date', '<', $now)
+            ->where('end_date', '>=', $user->created_at) // Only elections after registration
             ->whereNotIn('id', $userVoteIds)
             ->get();
 
@@ -45,7 +46,7 @@ class DashboardController extends Controller
             'activeElections' => $activeElectionsList->count(),
             'upcomingElections' => $upcomingElectionsList->count(),
             'closedElections' => $closedElectionsList->count(),
-            'skippedElections' => $skippedElectionsList->count(),
+            'skippedElections' => $skippedElectionsList->count(), // Will be 0 for new users
             'userVotesCount' => $user->votes->count(),
         ]);
     }

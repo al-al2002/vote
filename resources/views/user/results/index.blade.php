@@ -24,6 +24,12 @@
                 {{-- Election Title --}}
                 <h2 class="text-xl font-bold text-blue-400 mb-2">{{ $election->title }}</h2>
 
+                {{-- Dates --}}
+                <p class="text-sm text-gray-300 mb-2">
+                    <strong>Start:</strong> {{ \Carbon\Carbon::parse($election->start_date)->format('F d, Y h:i A') }} <br>
+                    <strong>End:</strong> {{ \Carbon\Carbon::parse($election->end_date)->format('F d, Y h:i A') }}
+                </p>
+
                 {{-- Election Status --}}
                 <p class="mb-2">
                     Status:

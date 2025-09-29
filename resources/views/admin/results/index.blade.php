@@ -12,8 +12,16 @@
                 {{-- Election Title --}}
                 <h2 class="text-2xl font-bold mb-2 text-blue-600">{{ $election->title }}</h2>
 
+                {{-- Dates --}}
+                <p class="text-sm text-gray-600">
+                    <strong>Start:</strong> {{ \Carbon\Carbon::parse($election->start_date)->format('F d, Y h:i A') }} <br>
+                    <strong>End:</strong> {{ \Carbon\Carbon::parse($election->end_date)->format('F d, Y h:i A') }}
+                </p>
+
                 {{-- Status --}}
-                <p>Status: <span class="text-red-600 font-semibold">Closed</span></p>
+                <p class="mt-2">
+                    Status: <span class="text-red-600 font-semibold">Closed</span>
+                </p>
 
                 {{-- Total Votes --}}
                 @php

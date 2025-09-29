@@ -41,7 +41,6 @@
             width: 0;
             height: 0;
             border-top: 40px solid #f59e0b;
-            /* orange color */
             border-left: 40px solid transparent;
             border-radius: 0 8px 0 0;
             z-index: 1;
@@ -137,19 +136,16 @@
                     Candidates
                 </a>
 
-        <a href="{{ route('admin.voters.index') }}" class="menu-item flex items-center gap-2 px-4 py-3 text-white rounded-lg
-                  @if(request()->routeIs('admin.voters') || request()->routeIs('admin.voters.*')) active @endif">
-
-            {{-- User Group Icon --}}
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                class="w-5 h-5">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M15 19.128a9.38 9.38 0 01-6 0M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm6.75 4.5a6.75 6.75 0 10-13.5 0h13.5z" />
-            </svg>
-
-            Manage Voters
-        </a>
-
+                <a href="{{ route('admin.voters.index') }}" class="menu-item flex items-center gap-2 px-4 py-3 text-white rounded-lg
+                   @if(request()->routeIs('admin.voters') || request()->routeIs('admin.voters.*')) active @endif">
+                    {{-- User Group Icon --}}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15 19.128a9.38 9.38 0 01-6 0M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm6.75 4.5a6.75 6.75 0 10-13.5 0h13.5z" />
+                    </svg>
+                    Manage Voters
+                </a>
 
                 <a href="{{ route('admin.results') }}"
                     class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.results')) active @endif">
@@ -160,17 +156,15 @@
                     </svg>
                     Results
                 </a>
-    <a href="{{ route('admin.live-monitor') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
-              {{ request()->routeIs('admin.live-monitor*') ? 'active' : '' }}">
-        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6h6v6m-3-9V5m0 0L9 9m3-4l3 4" />
-        </svg>
-        Live Monitor
-    </a>
 
-
-
-
+                <a href="{{ route('admin.live-monitor') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
+                    {{ request()->routeIs('admin.live-monitor*') ? 'active' : '' }}">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-6h6v6m-3-9V5m0 0L9 9m3-4l3 4" />
+                    </svg>
+                    Live Monitor
+                </a>
             </div>
         </nav>
 
@@ -197,7 +191,30 @@
                 <h2 id="pageTitle" class="text-2xl font-bold text-gray-800">@yield('title', 'Dashboard')</h2>
                 <p class="text-gray-600 text-sm">Welcome back, manage your voting system</p>
             </div>
-            @yield('header-actions')
+
+            {{-- 🔔 SMS Inbox Icon with Badge --}}
+            <div class="flex items-center gap-6">
+                <a href="{{ route('admin.sms.index') }}" class="relative flex items-center">
+                    <svg class="w-6 h-6 text-gray-600 hover:text-[#09182D]" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 12.79V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6.79a2 2 0 00.89 1.664L12 21l8.11-6.546A2 2 0 0021 12.79z" />
+                    </svg>
+
+                @php
+                    use App\Models\Message;
+                    $unreadCount = Message::where('status', 'unread')->count();
+                @endphp
+
+
+                    @if($unreadCount > 0)
+                        <span
+                            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                            {{ $unreadCount }}
+                        </span>
+                    @endif
+                </a>
+            </div>
         </header>
 
         <main class="flex-1 overflow-y-auto content-area p-6">

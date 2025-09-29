@@ -26,7 +26,7 @@ class CandidateController extends Controller
                   ->when($status === 'closed', fn($q) => $q->where('end_date', '<', $now));
         }
 
-        $elections = $query->get();
+         $elections = $query->orderBy('start_date', 'DESC')->get();
         return view('admin.candidates.index', compact('elections'));
     }
 

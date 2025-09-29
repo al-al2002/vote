@@ -26,41 +26,6 @@
             transform: translateY(-4px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, .4);
         }
-
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 9999px;
-            font-size: .75rem;
-            font-weight: 600;
-        }
-
-        .status-active {
-            background: #10b981;
-            color: white;
-        }
-
-        .status-upcoming {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .status-closed {
-            background: #ef4444;
-            color: white;
-        }
-
-        .vote-btn {
-            background: #facc15;
-            color: #09182D;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: transform .2s;
-        }
-
-        .vote-btn:hover {
-            transform: scale(1.05)
-        }
     </style>
 </head>
 
@@ -70,7 +35,7 @@
     <header class="bg-[#09182D] shadow-md border-b border-gray-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center justify-between">
 
-            {{-- Left Logo --}}
+            {{-- Logo --}}
             <div class="flex items-center space-x-3">
                 <div class="w-12 h-12 bg-yellow-400 rounded-lg flex items-center justify-center">
                     <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,22 +51,24 @@
 
             {{-- Right Section --}}
             <div class="flex items-center space-x-4">
-
-                {{-- Results --}}
                 <a href="{{ route('user.results.index') }}"
                     class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition">
                     Results
                 </a>
-            {{-- Live Monitor --}}
-            <a href="{{ route('user.live-monitor') }}"
-               class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition">
-                Live Monitor
-            </a>
 
+                <a href="{{ route('user.live-monitor.index') }}"
+                    class="bg-yellow-400 hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-semibold transition">
+                    Live Monitor
+                </a>
+
+                <a href="{{ route('user.messages.index') }}"
+                    class="relative px-4 py-2 rounded-lg font-semibold transition
+                          {{ request()->routeIs('user.messages.*') ? 'bg-yellow-500 text-black' : 'bg-yellow-400 text-black hover:bg-yellow-500' }}">
+                    📥 Inbox
+                </a>
 
                 {{-- User Dropdown --}}
                 <div class="relative">
-                    {{-- Trigger button --}}
                     <button id="userMenuBtn" class="flex items-center space-x-2 focus:outline-none">
                         <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-400">
                             @if(Auth::user()->profile_photo)
@@ -113,32 +80,42 @@
                                 </div>
                             @endif
                         </div>
-                        <span class="hidden sm:block font-semibold">{{ Auth::user()->name ?? 'Guest' }}</span>
+                        <div class="hidden sm:block text-left">
+                            <span class="font-semibold block">{{ Auth::user()->name ?? 'Guest' }}</span>
+                            <span class="text-xs text-gray-400">ID: {{ Auth::user()->voter_id ?? 'N/A' }}</span>
+                        </div>
                         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
 
-
                     {{-- Dropdown menu --}}
-                    <div id="userMenu"
-                        class="absolute right-0 mt-2 w-48 bg-[#10243F] border border-gray-700 rounded-lg shadow-lg hidden z-50">
-                        <a href="{{ route('profile.edit') }}"
-                            class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Edit Profile</a>
-                        <a href="{{ route('profile.settings') }}"
-                            class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Settings</a>
-                        <a href="{{ route('password.change') }}"
-                            class="block px-4 py-2 text-sm text-white hover:bg-gray-700">Change Password</a>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit"
-                                class="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-gray-700">
-                                Logout
-                            </button>
-                        </form>
-                    </div>
+                <div id="userMenu"
+                    class="absolute right-0 mt-2 w-48 bg-[#10243F] border border-gray-700 rounded-lg shadow-lg hidden z-50">
+
+                    <a href="{{ route('user.profile.edit') }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
+                        Edit Profile
+                    </a>
+
+                    <a href="{{ route('user.profile.settings') }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
+                        Settings
+                    </a>
+
+                    <a href="{{ route('user.password.change') }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
+                        Change Password
+                    </a>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-gray-700">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+
                 </div>
             </div>
+
         </div>
     </header>
 

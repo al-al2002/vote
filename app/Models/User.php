@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Election;
 
 class User extends Authenticatable
 {
@@ -16,7 +17,8 @@ class User extends Authenticatable
         'voter_id',
         'profile_photo',
         'is_eligible',
-        'eligibility_overridden', // ✅ new field to track admin override
+        'eligibility_overridden',
+        'role',
     ];
 
     protected $casts = [
@@ -24,88 +26,75 @@ class User extends Authenticatable
         'eligibility_overridden' => 'boolean',
     ];
 
-    /**
-     * A user has many votes.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
     public function votes()
     {
         return $this->hasMany(Vote::class, 'user_id');
     }
 
-    /**
-     * Elections this user participated in (through votes).
-     */
     public function elections()
     {
         return $this->belongsToMany(Election::class, 'votes', 'user_id', 'election_id')
                     ->withTimestamps();
     }
 
-    /**
-     * Count how many elections this voter skipped (finished elections only).
-     */
-    public function skippedElectionsCount()
-    {
-        $totalElections = Election::where('end_date', '<', now())->count();
-        $votedElections = $this->votes()
-            ->whereHas('election', function ($query) {
-                $query->where('end_date', '<', now());
-            })
-            ->distinct('election_id')
-            ->count('election_id');
 
-        return max(0, $totalElections - $votedElections);
+
+    public function skippedElectionsCount(): int
+    {
+        return count($this->skippedElections());
     }
 
-    /**
-     * Auto check if voter is flagged (skipped 5 or more elections).
-     */
-    public function isAutoFlagged()
+public function skippedElections(): array
+{
+    $endedElections = Election::where('end_date', '>=', $this->created_at)
+                              ->where('end_date', '<', now())
+                              ->get();
+
+    $skipped = [];
+    foreach ($endedElections as $election) {
+        $voted = $this->votes()->where('election_id', $election->id)->exists();
+        if (! $voted) {
+            $skipped[] = $election->title; // assuming elections table has 'title'
+        }
+    }
+
+    return $skipped;
+}
+
+
+
+    public function isAutoFlagged(): bool
     {
         return $this->skippedElectionsCount() >= 5;
     }
 
-    /**
-     * Get final eligibility.
-     * If admin has overridden, respect their choice.
-     * If not, apply auto-flag rule.
-     */
-    public function finalEligibility()
+    // Final eligibility (respects override first, then auto-flagging)
+    public function finalEligibility(): bool
     {
         if ($this->eligibility_overridden) {
             return $this->is_eligible;
         }
 
-        return !$this->isAutoFlagged();
+        return ! $this->isAutoFlagged();
     }
 
-    /**
-     * Update eligibility automatically, unless overridden by admin.
-     */
-    public function updateAutoEligibility()
-    {
-        if (!$this->eligibility_overridden) {
-            $this->is_eligible = !$this->isAutoFlagged();
-            $this->save();
-        }
-    }
 
-    /**
-     * Admin manually sets eligibility.
-     */
-    public function overrideEligibility($status)
+
+    public function overrideEligibility(bool $status): void
     {
         $this->is_eligible = $status;
         $this->eligibility_overridden = true;
         $this->save();
     }
 
-    /**
-     * Admin removes override and system goes back to auto mode.
-     */
-    public function removeOverride()
+    public function removeOverride(): void
     {
         $this->eligibility_overridden = false;
-        $this->updateAutoEligibility();
+        $this->save();
     }
 }

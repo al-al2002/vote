@@ -12,34 +12,33 @@ class ElectionController extends Controller
     /**
      * Display a listing of elections with optional status filtering & search.
      */
-  public function index(Request $request)
-{
-    $now = Carbon::now();
-    $filter = $request->get('status');
-    $keyword = $request->get('search');
+    public function index(Request $request)
+    {
+        $now = Carbon::now();
+        $filter = $request->get('status');
+        $keyword = $request->get('search');
 
-    $query = Election::query();
+        $query = Election::query();
 
-    // 🔍 Search by title
-    if (!empty($keyword)) {
-        $query->where('title', 'like', "%{$keyword}%");
+        // 🔍 Search by title
+        if (!empty($keyword)) {
+            $query->where('title', 'like', "%{$keyword}%");
+        }
+
+        // 📌 Filter by status (time-aware)
+        if ($filter === 'active') {
+            $query->where('start_date', '<=', $now)
+                  ->where('end_date', '>=', $now);
+        } elseif ($filter === 'upcoming') {
+            $query->where('start_date', '>', $now);
+        } elseif ($filter === 'closed') {
+            $query->where('end_date', '<', $now);
+        }
+
+        $elections = $query->orderBy('start_date', 'DESC')->get();
+
+        return view('admin.elections.index', compact('elections', 'filter', 'keyword'));
     }
-
-    // 📌 Filter by status (time-aware)
-    if ($filter === 'active') {
-        $query->where('start_date', '<=', $now)
-              ->where('end_date', '>=', $now);
-    } elseif ($filter === 'upcoming') {
-        $query->where('start_date', '>', $now);
-    } elseif ($filter === 'closed') {
-        $query->where('end_date', '<', $now);
-    }
-
-    $elections = $query->orderBy('start_date', 'asc')->get();
-
-    return view('admin.elections.index', compact('elections', 'filter', 'keyword'));
-}
-
 
     /**
      * Show the form for creating a new election.
@@ -98,19 +97,18 @@ class ElectionController extends Controller
      */
     public function update(Request $request, Election $election)
     {
-       $request->validate([
-    'title' => 'required|string|max:255',
-    'description' => 'nullable|string',
-    'start_date' => 'required|date_format:Y-m-d\TH:i',
-    'end_date' => 'required|date_format:Y-m-d\TH:i|after_or_equal:start_date',
-]);
-
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'start_date' => 'required|date_format:Y-m-d\TH:i',
+            'end_date' => 'required|date_format:Y-m-d\TH:i|after_or_equal:start_date',
+        ]);
 
         $election->update($request->only([
             'title',
-    'description',
-    'start_date',
-    'end_date',
+            'description',
+            'start_date',
+            'end_date',
         ]));
 
         return redirect()
@@ -133,41 +131,41 @@ class ElectionController extends Controller
     /**
      * Show election results with winners, ties, and total votes.
      */
-   public function results(Request $request)
-{
-    $now = Carbon::now();
-    $filter = $request->get('status');
+    public function results(Request $request)
+    {
+        $now = Carbon::now();
+        $filter = $request->get('status');
 
-    $query = Election::with(['candidates' => fn($q) => $q->withCount('votes')]);
+        $query = Election::with(['candidates' => fn($q) => $q->withCount('votes')]);
 
-    if ($filter === 'active') {
-        $query->where('start_date', '<=', $now)
-              ->where('end_date', '>=', $now);
-    } elseif ($filter === 'upcoming') {
-        $query->where('start_date', '>', $now);
-    } elseif ($filter === 'closed') {
-        $query->where('end_date', '<', $now);
-    }
-
-    $elections = $query->orderBy('start_date', 'asc')->get();
-
-    foreach ($elections as $election) {
-        $candidates = $election->candidates ?? collect();
-
-        $election->total_votes = (int) $candidates->sum(fn($c) => $c->votes_count ?? $c->votes()->count());
-
-        if ($election->total_votes > 0) {
-            $maxVotes = $candidates->max(fn($c) => $c->votes_count ?? $c->votes()->count());
-
-            $election->winners = $candidates
-                ->filter(fn($c) => ($c->votes_count ?? $c->votes()->count()) === $maxVotes)
-                ->values();
-        } else {
-            $election->winners = collect();
+        if ($filter === 'active') {
+            $query->where('start_date', '<=', $now)
+                  ->where('end_date', '>=', $now);
+        } elseif ($filter === 'upcoming') {
+            $query->where('start_date', '>', $now);
+        } elseif ($filter === 'closed') {
+            $query->where('end_date', '<', $now);
         }
+
+        $elections = $query->orderBy('start_date', 'asc')->get();
+
+        foreach ($elections as $election) {
+            $candidates = $election->candidates ?? collect();
+
+            // Total votes for this election
+            $election->total_votes = (int) $candidates->sum(fn($c) => $c->votes_count ?? $c->votes()->count());
+
+            // Determine winners
+            if ($election->total_votes > 0) {
+                $maxVotes = $candidates->max(fn($c) => $c->votes_count ?? $c->votes()->count());
+                $election->winners = $candidates
+                    ->filter(fn($c) => ($c->votes_count ?? $c->votes()->count()) === $maxVotes)
+                    ->values();
+            } else {
+                $election->winners = collect();
+            }
+        }
+
+        return view('admin.results.index', compact('elections', 'filter'));
     }
-
-    return view('admin.results.index', compact('elections', 'filter'));
-}
-
 }
