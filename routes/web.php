@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 
 // ----------------------
 // Controllers
 // ----------------------
+// Auth
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 
@@ -24,6 +24,12 @@ use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\PasswordController;
 use App\Http\Controllers\User\VoteHistoryController;
 use App\Http\Controllers\User\ResultController as UserResultController;
+use App\Http\Controllers\User\LiveMonitorController as UserLiveMonitorController;
+
+// ----------------------
+// Redirect root URL to login
+// ----------------------
+Route::get('/', fn() => redirect()->route('login'));
 
 // ----------------------
 // Authentication Routes
@@ -38,7 +44,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // ----------------------
 // Admin Routes
 // ----------------------
-Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -48,6 +54,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Candidates CRUD
     Route::resource('candidates', CandidateController::class);
+    Route::post('/candidates/store-multiple', [CandidateController::class, 'storeMultiple'])
+        ->name('candidates.storeMultiple');
 
     // Voters
     Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
@@ -55,6 +63,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Results
     Route::get('/results', [ResultController::class, 'index'])->name('results');
+
+    // Live Monitor
+    Route::get('/live-monitor', [LiveMonitorController::class, 'index'])->name('live-monitor');
+    Route::get('/live-monitor/data', [LiveMonitorController::class, 'data'])->name('live-monitor.data');
 });
 
 // ----------------------
@@ -73,25 +85,15 @@ Route::prefix('user')->name('user.')->middleware(['auth'])->group(function () {
     // Results
     Route::get('/results', [UserResultController::class, 'index'])->name('results.index');
 
-    // Vote History
-    Route::get('/voting-history', function (Request $request) {
-        $user = $request->user();
+    // Vote History (AJAX endpoint)
+    Route::get('/votes/history', [VoteHistoryController::class, 'fetch'])->name('votes.history');
 
-        if (!$user) {
-            return response()->json([
-                'error' => 'Not logged in',
-                'votes' => []
-            ], 401);
-        }
-
-        return response()->json([
-            'votes' => $user->votes()->with('election')->latest()->get()
-        ]);
-    })->name('voting.history');
+    // Live Monitor
+    Route::get('/live-monitor', [UserLiveMonitorController::class, 'index'])->name('live-monitor');
 });
 
 // ----------------------
-// Profile & Settings Routes
+// Profile & Settings
 // ----------------------
 Route::middleware(['auth'])->group(function () {
 
@@ -100,39 +102,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
     // Settings page
-    Route::get('/profile/settings', function () {
-        return view('user.profile.settings');
-    })->name('profile.settings');
+    Route::get('/profile/settings', fn() => view('user.profile.settings'))->name('profile.settings');
 
     // Change Password
     Route::get('/profile/password/change', [PasswordController::class, 'edit'])->name('password.change');
     Route::post('/profile/password/change', [PasswordController::class, 'update'])->name('password.update');
 });
 
-// ----------------------
-// Additional User Vote History Route (AJAX endpoint)
-// ----------------------
-Route::middleware(['auth'])->get('/user/votes/history', [VoteHistoryController::class, 'fetch'])->name('user.votes.history');
 
-
-
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
-    Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
-    Route::patch('/voters/{voter}/toggle', [VoterController::class, 'toggle'])->name('voters.toggle');
-});
-
-//admin live monitor
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/live-monitor', [LiveMonitorController::class, 'index'])
-        ->name('live-monitor');
-
-    Route::get('/live-monitor/data', [LiveMonitorController::class, 'data'])
-        ->name('live-monitor.data');
+    Route::get('/voters', [VoterController::class, 'index'])->name('voters.index');
+    Route::patch('/voters/{id}/toggle', [VoterController::class, 'toggle'])->name('voters.toggle');
 });
-
-//user live monitor
-Route::get('/user/live-monitor', [App\Http\Controllers\User\LiveMonitorController::class, 'index'])
-    ->name('user.live-monitor');
-
-
-

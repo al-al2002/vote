@@ -19,12 +19,11 @@ class Election extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'datetime',
-        'end_date'   => 'datetime',
+        'start_date' => 'datetime:Y-m-d H:i',
+        'end_date'   => 'datetime:Y-m-d H:i',
     ];
 
-
-
+    // Relationships
     public function candidates()
     {
         return $this->hasMany(Candidate::class);
@@ -35,8 +34,7 @@ class Election extends Model
         return $this->hasMany(Vote::class);
     }
 
-
-
+    // Status checks with datetime
     public function isActive(): bool
     {
         $now = Carbon::now();
@@ -45,16 +43,17 @@ class Election extends Model
 
     public function isUpcoming(): bool
     {
-        return $this->start_date > Carbon::now();
+        $now = Carbon::now();
+        return $this->start_date > $now;
     }
 
     public function isClosed(): bool
     {
-        return $this->end_date < Carbon::now();
+        $now = Carbon::now();
+        return $this->end_date < $now;
     }
 
-
-
+    // Winners
     public function winners()
     {
         if (!$this->isClosed()) {
@@ -62,13 +61,9 @@ class Election extends Model
         }
 
         $candidates = $this->candidates()->withCount('votes')->get();
-
-        if ($candidates->isEmpty()) {
-            return collect();
-        }
+        if ($candidates->isEmpty()) return collect();
 
         $maxVotes = $candidates->max('votes_count');
-
         return $candidates->where('votes_count', $maxVotes);
     }
 

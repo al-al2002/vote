@@ -20,7 +20,7 @@
         @endphp
 
         @forelse($closedElections as $election)
-            <div class="card mb-6">
+            <div class="card mb-6 p-4 rounded-lg shadow bg-[#10243F] text-white">
                 {{-- Election Title --}}
                 <h2 class="text-xl font-bold text-blue-400 mb-2">{{ $election->title }}</h2>
 
@@ -34,13 +34,18 @@
                 <p class="mb-2"><strong>Total Votes:</strong> {{ $election->total_votes ?? 0 }}</p>
 
                 {{-- Winners --}}
+                @php
+                    $maxVotes = $election->candidates->max('votes_count');
+                    $winners = $election->candidates->where('votes_count', $maxVotes);
+                @endphp
+
                 <h4 class="font-semibold mt-2">
-                    Winner{{ ($election->winners && $election->winners->count() > 1) ? 's' : '' }}:
+                    Winner{{ $winners->count() > 1 ? 's (Tie)' : '' }}:
                 </h4>
 
-                @if($election->winners && $election->winners->count() > 0)
+                @if($winners->count() > 0)
                     <ul class="list-disc list-inside text-yellow-400 font-bold">
-                        @foreach($election->winners as $winner)
+                        @foreach($winners as $winner)
                             <li>🎉 {{ $winner->name }} ({{ $winner->votes_count }} votes)</li>
                         @endforeach
                     </ul>
@@ -60,8 +65,7 @@
                     </thead>
                     <tbody>
                         @foreach($election->candidates as $candidate)
-                            <tr @if(($election->winners->count() ?? 0) > 0 && $election->winners->contains('id', $candidate->id))
-                            class="bg-yellow-900 font-bold" @endif>
+                            <tr @if($winners->contains('id', $candidate->id)) class="bg-yellow-900 font-bold" @endif>
                                 <td class="px-4 py-2 border border-gray-700">
                                     @if($candidate->photo)
                                         <img src="{{ asset('storage/' . $candidate->photo) }}" alt="{{ $candidate->name }}"

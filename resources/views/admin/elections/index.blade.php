@@ -3,15 +3,16 @@
 @section('title', 'Manage Elections')
 
 @section('content')
-    <h1 class="text-2xl font-bold mb-4">Elections</h1>
+    <h1 class="text-2xl font-bold mb-4 text-[#09182D]">Elections</h1>
 
     <div class="flex justify-between items-center mb-4">
-        <a href="{{ route('admin.elections.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg">+ New
-            Election</a>
+        <a href="{{ route('admin.elections.create') }}"
+            class="bg-[#09182D] text-white px-4 py-2 rounded-lg hover:bg-[#0f2345] transition">+ New Election</a>
 
         {{-- Filter --}}
         <form method="GET" action="{{ route('admin.elections.index') }}">
-            <select name="status" onchange="this.form.submit()" class="border rounded-lg px-3 py-2">
+            <select name="status" onchange="this.form.submit()"
+                class="border border-[#09182D] rounded-lg px-3 py-2 text-[#09182D]">
                 <option value="">All</option>
                 <option value="active" {{ $filter === 'active' ? 'selected' : '' }}>Active</option>
                 <option value="upcoming" {{ $filter === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
@@ -48,87 +49,87 @@
                             }
                         @endphp
                         <span class="px-2 py-1 rounded
-                                    {{ $status === 'Active' ? 'bg-green-100 text-green-700' : '' }}
-                                    {{ $status === 'Upcoming' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                    {{ $status === 'Closed' ? 'bg-red-100 text-red-700' : '' }}">
+                                        {{ $status === 'Active' ? 'bg-green-100 text-green-700' : '' }}
+                                        {{ $status === 'Upcoming' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                        {{ $status === 'Closed' ? 'bg-red-100 text-red-700' : '' }}">
                             {{ $status }}
                         </span>
                     </td>
                     <td class="px-4 py-2 border flex space-x-2">
                         <a href="{{ route('admin.elections.edit', $election->id) }}"
-                            class="bg-yellow-500 text-white px-3 py-1 rounded">Edit</a>
+                            class="bg-[#09182D] text-white px-3 py-1 rounded hover:bg-[#0f2345] transition">Edit</a>
 
                         <form class="delete-election-form" action="{{ route('admin.elections.destroy', $election->id) }}"
                             method="POST">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded">Delete</button>
+                            <button type="submit"
+                                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">Delete</button>
                         </form>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="text-center py-4">No elections found</td>
+                    <td colspan="5" class="text-center py-4 text-gray-500">No elections found</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 
-   {{-- SweetAlert2 --}}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {{-- SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    // Delete confirmation for elections
-    document.querySelectorAll('.delete-election-form').forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This election will be permanently deleted!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+    <script>
+        // Delete confirmation for elections
+        document.querySelectorAll('.delete-election-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "This election will be permanently deleted!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
         });
-    });
 
-    // Success / Error popups for create, update, or delete
-    document.addEventListener('DOMContentLoaded', function () {
-        @if(session('success'))
-            setTimeout(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: "{{ session('success') }}",
-                    timer: 1000,          // Display for 1 second
-                    showConfirmButton: false,
-                    position: 'top-end',  // Top-right corner
-                    toast: true
-                });
-            }, 200); // 0.2 second delay
-        @endif
+        // Success / Error popups
+        document.addEventListener('DOMContentLoaded', function () {
+            @if(session('success'))
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: "{{ session('success') }}",
+                        timer: 1000,
+                        showConfirmButton: false,
+                        position: 'top-end',
+                        toast: true
+                    });
+                }, 200);
+            @endif
 
-        @if(session('error'))
-            setTimeout(() => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: "{{ session('error') }}",
-                    timer: 1000,
-                    showConfirmButton: false,
-                    position: 'top-end',
-                    toast: true
-                });
-            }, 200);
-        @endif
-    });
-</script>
-
+            @if(session('error'))
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: "{{ session('error') }}",
+                        timer: 1000,
+                        showConfirmButton: false,
+                        position: 'top-end',
+                        toast: true
+                    });
+                }, 200);
+            @endif
+        });
+    </script>
 @endsection

@@ -9,40 +9,79 @@ use Illuminate\Http\Request;
 class VoterController extends Controller
 {
     /**
-     * List voters with optional eligibility filter.
+     * Display voters with pagination.
      */
-  public function index(Request $request)
-{
-    $query = User::where('role', 'voter');
+    public function index(Request $request)
+    {
+        $query = User::where('role', 'voter'); // ✅ only voters
 
-    // Filter if selected
-    if ($request->filled('eligible') && in_array($request->eligible, ['0', '1'])) {
-        $query->where('is_eligible', $request->eligible);
+        if ($request->has('eligible') && $request->eligible !== '') {
+            $eligible = $request->eligible == 1;
+
+            // ✅ Need collection here because finalEligibility() is computed
+            $voters = $query->get()->filter(function ($voter) use ($eligible) {
+                return $voter->finalEligibility() == $eligible;
+            });
+
+            // ✅ Manually paginate
+            $voters = $voters->forPage($request->get('page', 1), 10);
+        } else {
+            $voters = $query->paginate(10);
+        }
+
+        return view('admin.voters.index', [
+            'voters' => $voters
+        ]);
     }
-
-    $voters = $query->paginate(10);
-
-    return view('admin.voters.index', compact('voters'));
-}
-
-
 
     /**
-     * Toggle voter eligibility manually.
+     * Toggle voter eligibility (manual override).
      */
-  public function toggle($id)
-{
-    $voter = User::findOrFail($id);
+    public function toggleEligibility($id)
+    {
+        $voter = User::findOrFail($id);
 
-    if ($voter->role !== 'voter') {
-        return redirect()->back()->with('error', 'Only voters can be updated.');
+        if (is_null($voter->admin_override)) {
+            // First time → flip whatever auto says
+            $voter->admin_override = !$voter->finalEligibility();
+        } else {
+            // Flip admin override
+            $voter->admin_override = !$voter->admin_override;
+        }
+
+        $voter->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Voter eligibility updated successfully!'
+        ]);
     }
 
-    $voter->is_eligible = !$voter->is_eligible;
-    $voter->save();
+    public function markEligible($id)
+    {
+        $voter = User::findOrFail($id);
+        $voter->manual_eligibility = 1;
+        $voter->save();
 
-    return redirect()->back()->with('success', 'Voter status updated successfully.');
-}
+        return redirect()->back()->with('success', 'Voter marked as eligible.');
+    }
 
+    public function markNotEligible($id)
+    {
+        $voter = User::findOrFail($id);
+        $voter->manual_eligibility = 0;
+        $voter->save();
 
+        return redirect()->back()->with('success', 'Voter marked as not eligible.');
+    }
+
+    public function resetEligibility($id)
+    {
+        $voter = User::findOrFail($id);
+        $voter->manual_eligibility = null;
+        $voter->admin_override = null; // ✅ reset both
+        $voter->save();
+
+        return redirect()->back()->with('success', 'Voter eligibility reset to automatic rules.');
+    }
 }

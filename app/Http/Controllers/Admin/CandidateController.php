@@ -12,82 +12,92 @@ use Carbon\Carbon;
 class CandidateController extends Controller
 {
     /**
-     * Display a listing of candidates with optional election filter.
+     * Display a listing of elections with candidates.
      */
-  public function index(Request $request)
-{
-    $elections = Election::all(); // For dropdown
-    $query = Candidate::with('election');
+    public function index(Request $request)
+    {
+        $status = $request->query('status', null);
+        $now = Carbon::now();
+        $query = Election::with('candidates');
 
-    // Filter by election status
-    if ($request->filled('status')) {
-        $status = $request->status;
-        $now = now();
+        if ($status) {
+            $query->when($status === 'active', fn($q) => $q->where('start_date', '<=', $now)->where('end_date', '>=', $now))
+                  ->when($status === 'upcoming', fn($q) => $q->where('start_date', '>', $now))
+                  ->when($status === 'closed', fn($q) => $q->where('end_date', '<', $now));
+        }
 
-        $query->whereHas('election', function($q) use ($status, $now) {
-            if ($status === 'active') {
-                $q->where('start_date', '<=', $now)
-                  ->where('end_date', '>=', $now);
-            } elseif ($status === 'upcoming') {
-                $q->where('start_date', '>', $now);
-            } elseif ($status === 'closed') {
-                $q->where('end_date', '<', $now);
-            }
-        });
+        $elections = $query->get();
+        return view('admin.candidates.index', compact('elections'));
     }
-
-    // Filter by specific election
-    if ($request->filled('election_id')) {
-        $query->where('election_id', $request->election_id);
-    }
-
-    $candidates = $query->get();
-
-    return view('admin.candidates.index', compact('candidates', 'elections'));
-}
 
     /**
      * Show the form for creating a new candidate.
      */
     public function create()
     {
-        // Only elections that are not closed
         $elections = Election::where('end_date', '>', Carbon::now())->get();
         return view('admin.candidates.create', compact('elections'));
     }
 
     /**
-     * Store a newly created candidate in storage.
+     * Store a single candidate.
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'position'    => 'required|string|max:255',
             'election_id' => 'required|exists:elections,id',
             'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $election = Election::findOrFail($request->election_id);
-
-        if (Carbon::now()->gt($election->end_date)) {
-            return redirect()->back()->with('error', 'Cannot add candidate to a closed election.');
+        $election = Election::findOrFail($validated['election_id']);
+        if (now()->gt($election->end_date)) {
+            return back()->with('error', 'Cannot add candidate to a closed election.');
         }
-
-        $data = $request->only(['name', 'position', 'election_id']);
 
         if ($request->hasFile('photo')) {
-            $data['photo'] = $request->file('photo')->store('candidates', 'public');
+            $validated['photo'] = $request->file('photo')->store('candidates', 'public');
         }
 
-        Candidate::create($data);
+        Candidate::create($validated);
 
         return redirect()->route('admin.candidates.index')
-                         ->with('delete_success', 'Candidate added successfully!');
+                         ->with('success', 'Candidate added successfully!');
     }
 
     /**
-     * Show the form for editing the specified candidate.
+     * Store multiple candidates at once.
+     */
+    public function storeMultiple(Request $request)
+    {
+        $request->validate([
+            'election_id'           => 'required|exists:elections,id',
+            'candidates.*.name'     => 'required|string|max:255',
+            'candidates.*.position' => 'required|string|max:255',
+            'candidates.*.photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $election = Election::findOrFail($request->election_id);
+        if (now()->gt($election->end_date)) {
+            return back()->with('error', 'Cannot add candidates to a closed election.');
+        }
+
+        foreach ($request->candidates as $candidate) {
+            $data = array_merge(
+                $candidate,
+                ['election_id' => $request->election_id],
+                !empty($candidate['photo']) ? ['photo' => $candidate['photo']->store('candidates', 'public')] : []
+            );
+            Candidate::create($data);
+        }
+
+        return redirect()->route('admin.candidates.index')
+                         ->with('success', 'Candidates added successfully!');
+    }
+
+    /**
+     * Show the form for editing a candidate.
      */
     public function edit(Candidate $candidate)
     {
@@ -96,41 +106,37 @@ class CandidateController extends Controller
     }
 
     /**
-     * Update the specified candidate in storage.
+     * Update a candidate.
      */
     public function update(Request $request, Candidate $candidate)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'position'    => 'required|string|max:255',
             'election_id' => 'required|exists:elections,id',
             'photo'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $election = Election::findOrFail($request->election_id);
-
-        if (Carbon::now()->gt($election->end_date)) {
-            return redirect()->back()->with('error', 'Cannot assign candidate to a closed election.');
+        $election = Election::findOrFail($validated['election_id']);
+        if (now()->gt($election->end_date)) {
+            return back()->with('error', 'Cannot assign candidate to a closed election.');
         }
 
-        $data = $request->only(['name', 'position', 'election_id']);
-
-        // Replace photo if uploaded
         if ($request->hasFile('photo')) {
             if ($candidate->photo && Storage::disk('public')->exists($candidate->photo)) {
                 Storage::disk('public')->delete($candidate->photo);
             }
-            $data['photo'] = $request->file('photo')->store('candidates', 'public');
+            $validated['photo'] = $request->file('photo')->store('candidates', 'public');
         }
 
-        $candidate->update($data);
+        $candidate->update($validated);
 
         return redirect()->route('admin.candidates.index')
-                         ->with('delete_success', 'Candidate updated successfully!');
+                         ->with('success', 'Candidate updated successfully!');
     }
 
     /**
-     * Remove the specified candidate from storage.
+     * Delete a candidate.
      */
     public function destroy(Candidate $candidate)
     {
@@ -141,6 +147,6 @@ class CandidateController extends Controller
         $candidate->delete();
 
         return redirect()->route('admin.candidates.index')
-                         ->with('delete_success', 'Candidate deleted successfully!');
+                         ->with('success', 'Candidate deleted successfully!');
     }
 }

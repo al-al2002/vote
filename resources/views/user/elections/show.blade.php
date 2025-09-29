@@ -13,7 +13,7 @@
         <div class="absolute top-4 left-4">
             <a href="{{ route('user.dashboard') }}"
                 class="inline-block bg-gray-700 hover:bg-gray-600 text-white px-5 py-2 rounded-lg font-semibold transition">
-                ← Back to Dashboard?
+                ← Back to Dashboard
             </a>
         </div>
 
@@ -22,9 +22,10 @@
             <h2 class="text-4xl font-extrabold text-yellow-400 mb-3">{{ $election->title }}</h2>
             <p class="text-gray-300 text-lg max-w-2xl mx-auto">{{ $election->description }}</p>
             <p class="text-sm text-gray-400 mt-2">
-                {{ \Carbon\Carbon::parse($election->start_date)->format('M d, Y') }} -
-                {{ \Carbon\Carbon::parse($election->end_date)->format('M d, Y') }}
+                {{ \Carbon\Carbon::parse($election->start_date)->format('M d, Y h:i A') }} -
+                {{ \Carbon\Carbon::parse($election->end_date)->format('M d, Y h:i A') }}
             </p>
+            <p class="text-green-400 text-lg mt-2">Time Remaining: <span id="countdown"></span></p>
         </div>
 
         {{-- Candidates Section --}}
@@ -51,7 +52,7 @@
                         <p class="text-gray-400 text-sm">{{ $candidate->position ?? 'Candidate' }}</p>
 
                         {{-- Vote Button --}}
-                        <button
+                        <button id="vote-btn-{{ $candidate->id }}"
                             onclick="confirmVote('{{ $candidate->id }}', '{{ $candidate->name }}', '{{ $candidate->photo_url ?? asset('storage/' . $candidate->photo) }}')"
                             class="mt-4 bg-yellow-400 text-[#09182D] px-5 py-2 rounded-lg font-semibold hover:bg-yellow-300 transition">
                             Vote
@@ -79,15 +80,38 @@
                     const form = document.createElement('form');
                     form.method = 'POST';
                     form.action = '{{ route("user.elections.vote", $election->id) }}';
-                    form.innerHTML = `
-                        @csrf
-                        <input type="hidden" name="candidate_id" value="${candidateId}">
-                    `;
+                    form.innerHTML = `@csrf<input type="hidden" name="candidate_id" value="${candidateId}">`;
                     document.body.appendChild(form);
                     form.submit();
                 }
             });
         }
+
+        // Countdown Timer
+        var countdownEl = document.getElementById('countdown');
+        var endTime = new Date("{{ $election->end_date }}").getTime();
+
+        var x = setInterval(function () {
+            var now = new Date().getTime();
+            var distance = endTime - now;
+
+            if (distance > 0) {
+                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                countdownEl.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+            } else {
+                countdownEl.innerHTML = "Election Closed";
+                clearInterval(x);
+                // Disable all vote buttons
+                document.querySelectorAll("button[id^='vote-btn-']").forEach(btn => {
+                    btn.disabled = true;
+                    btn.classList.add('bg-gray-500', 'cursor-not-allowed');
+                    btn.classList.remove('bg-yellow-400', 'hover:bg-yellow-300');
+                });
+            }
+        }, 1000);
 
         @if(session('success'))
             Swal.fire({
@@ -96,9 +120,7 @@
                 showConfirmButton: false,
                 timer: 2000,
                 timerProgressBar: true,
-                willClose: () => {
-                    window.location.href = '{{ route("user.elections.index") }}';
-                }
+                willClose: () => { window.location.href = '{{ route("user.elections.index") }}'; }
             });
         @elseif(session('error'))
             Swal.fire({

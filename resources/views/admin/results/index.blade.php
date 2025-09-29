@@ -3,30 +3,17 @@
 @section('title', 'Election Results')
 
 @section('content')
-    <div class="container mx-auto">
-        <h1 class="text-2xl font-bold mb-4">Election Results</h1>
+    <div class="container mx-auto py-6">
+        <h1 class="text-2xl font-bold mb-6">Closed Election Results</h1>
 
-        {{-- Filter (Locked to Closed) --}}
-        <div class="mb-6">
-            <form>
-                <select class="border rounded-lg px-3 py-2 bg-gray-100 text-gray-600 cursor-not-allowed" disabled>
-                    <option value="closed" selected>Closed</option>
-                </select>
-            </form>
-        </div>
-
-        {{-- Elections --}}
         @forelse($elections as $election)
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
+            <div class="bg-white p-6 rounded-lg shadow mb-6">
 
                 {{-- Election Title --}}
                 <h2 class="text-2xl font-bold mb-2 text-blue-600">{{ $election->title }}</h2>
 
                 {{-- Status --}}
-                <p>
-                    Status:
-                    <span class="text-red-600">Closed</span>
-                </p>
+                <p>Status: <span class="text-red-600 font-semibold">Closed</span></p>
 
                 {{-- Total Votes --}}
                 @php
@@ -35,8 +22,12 @@
                 <p class="mt-1"><strong>Total Votes:</strong> {{ $totalVotes }}</p>
 
                 {{-- Winners --}}
-                @php $winners = $election->winners(); @endphp
-                <h4 class="mt-2 font-semibold">Winner{{ $winners->count() > 1 ? 's' : '' }}:</h4>
+                @php
+                    $winners = $election->winners(); // Returns all candidates with max votes
+                @endphp
+                <h4 class="mt-2 font-semibold">
+                    Winner{{ $winners->count() > 1 ? 's (Tie)' : '' }}:
+                </h4>
                 @if($winners->isNotEmpty())
                     <ul class="list-disc list-inside text-yellow-600 font-bold">
                         @foreach($winners as $winner)
