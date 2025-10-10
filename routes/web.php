@@ -26,7 +26,8 @@ use App\Http\Controllers\User\PasswordController;
 use App\Http\Controllers\User\VoteHistoryController;
 use App\Http\Controllers\User\ResultController as UserResultController;
 use App\Http\Controllers\User\LiveMonitorController as UserLiveMonitorController;
-use App\Http\Controllers\User\MessageController as UserMessageController;
+use App\Http\Controllers\User\MessageController;
+use App\Http\Controllers\User\VoteController;
 
 // ----------------------
 // Root Redirect
@@ -61,11 +62,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     Route::get('/live-monitor', [LiveMonitorController::class, 'index'])->name('live-monitor');
     Route::get('/live-monitor/data', [LiveMonitorController::class, 'data'])->name('live-monitor.data');
 
-    Route::get('/sms', [SmsController::class, 'index'])->name('sms.index');
-    Route::patch('/sms/read/{id}', [SmsController::class, 'markAsRead'])->name('sms.read');
-    Route::post('/sms/reply/{id}', [SmsController::class, 'reply'])->name('sms.reply');
-    Route::delete('/sms/delete/{id}', [SmsController::class, 'destroy'])->name('sms.delete');
+    // Admin SMS / Inbox
+    Route::get('/sms', [SmsController::class, 'index'])->name('sms.index'); // Inbox (list of conversations)
+    Route::get('/sms/conversation/{conversation_id}', [SmsController::class, 'conversation'])->name('sms.conversation'); // View conversation
+    Route::post('/sms/reply/{conversation_id}', [SmsController::class, 'reply'])->name('sms.reply'); // Reply to conversation
+    Route::patch('/sms/read/{id}', [SmsController::class, 'markAsRead'])->name('sms.read'); // Mark a message as read
+    Route::delete('/sms/delete/{id}', [SmsController::class, 'destroy'])->name('sms.delete'); // Delete a message
 });
+
 
 // ----------------------
 // User Routes
@@ -99,8 +103,13 @@ Route::prefix('user')->name('user.')->middleware(['auth'])->group(function () {
     Route::post('/profile/password/change', [PasswordController::class, 'update'])->name('password.update');
 
     // Messages / Inbox
-    Route::get('/messages', [UserMessageController::class, 'index'])->name('messages.index');
-    Route::post('/messages', [UserMessageController::class, 'store'])->name('messages.store');
-    Route::post('/messages/{id}/reply', [UserMessageController::class, 'reply'])->name('messages.reply');
-    Route::delete('/messages/{id}', [UserMessageController::class, 'destroy'])->name('messages.delete');
+   Route::get('/sms', [MessageController::class, 'index'])->name('messages.index'); // Inbox list
+    Route::post('/sms', [MessageController::class, 'store'])->name('messages.store'); // Send new
+    Route::get('/sms/conversation/{conversation_id}', [MessageController::class, 'conversation'])->name('messages.conversation'); // View conversation
+    Route::post('/sms/reply/{conversation_id}', [MessageController::class, 'reply'])->name('messages.reply'); // Reply in conversation
+    Route::delete('/sms/{id}', [MessageController::class, 'destroy'])->name('messages.destroy'); // Delete
+ Route::get('/sms/create', [MessageController::class, 'create'])->name('messages.create');
+
+    // Vote Receipt PDF
+    Route::get('/vote/download-pdf/{election}', [VoteController::class, 'downloadPDF'])->name('vote.downloadPDF');
 });

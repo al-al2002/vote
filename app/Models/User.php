@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Election;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
@@ -42,32 +42,38 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Skipped Elections Logic
+    |--------------------------------------------------------------------------
+    */
+    public function skippedElections(): array
+    {
+        $endedElections = Election::where('end_date', '>=', $this->created_at)
+            ->where('end_date', '<', now())
+            ->get();
 
+        $skipped = [];
+        foreach ($endedElections as $election) {
+            $voted = $this->votes()->where('election_id', $election->id)->exists();
+            if (! $voted) {
+                $skipped[] = $election->title; // assuming 'title' column exists
+            }
+        }
+
+        return $skipped;
+    }
 
     public function skippedElectionsCount(): int
     {
         return count($this->skippedElections());
     }
 
-public function skippedElections(): array
-{
-    $endedElections = Election::where('end_date', '>=', $this->created_at)
-                              ->where('end_date', '<', now())
-                              ->get();
-
-    $skipped = [];
-    foreach ($endedElections as $election) {
-        $voted = $this->votes()->where('election_id', $election->id)->exists();
-        if (! $voted) {
-            $skipped[] = $election->title; // assuming elections table has 'title'
-        }
-    }
-
-    return $skipped;
-}
-
-
-
+    /*
+    |--------------------------------------------------------------------------
+    | Eligibility Logic
+    |--------------------------------------------------------------------------
+    */
     public function isAutoFlagged(): bool
     {
         return $this->skippedElectionsCount() >= 5;
@@ -82,8 +88,6 @@ public function skippedElections(): array
 
         return ! $this->isAutoFlagged();
     }
-
-
 
     public function overrideEligibility(bool $status): void
     {

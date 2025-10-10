@@ -4,6 +4,8 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Election;
+use App\Models\User;
+use App\Models\Vote;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -19,23 +21,38 @@ class DashboardController extends Controller
 
         $now = Carbon::now('Asia/Manila');
 
-        // Active elections: started but not ended
+        // Elections categories
         $activeElectionsList = Election::where('start_date', '<=', $now)
             ->where('end_date', '>=', $now)
             ->get();
 
-        // Upcoming elections: start date in the future
         $upcomingElectionsList = Election::where('start_date', '>', $now)->get();
 
-        // Closed elections: end date in the past
         $closedElectionsList = Election::where('end_date', '<', $now)->get();
+        // Skipped elections: ended after registration but user didn’t vote
+                $userVoteIds = Vote::where('user_id', $user->id)->pluck('election_id')->toArray();
 
-        // Skipped elections: ended after user registered but user did not vote
-        $userVoteIds = $user->votes->pluck('election_id')->toArray();
-        $skippedElectionsList = Election::where('end_date', '<', $now)
-            ->where('end_date', '>=', $user->created_at) // Only elections after registration
-            ->whereNotIn('id', $userVoteIds)
-            ->get();
+                $skippedElectionsList = Election::where('end_date', '<', $now)
+                    ->where('end_date', '>=', $user->created_at)
+                    ->whereNotIn('id', $userVoteIds)
+                    ->get();
+
+        $skippedCount = $skippedElectionsList->count();
+
+        // ✅ Respect Admin Overrides
+        $userModel = User::find($user->id);
+
+        if ($userModel && !$userModel->eligibility_overridden) {
+            // Auto-update eligibility only if admin has not manually overridden it
+            if ($skippedCount >= 5 && $userModel->is_eligible) {
+                $userModel->update(['is_eligible' => false]);
+            } elseif ($skippedCount < 5 && !$userModel->is_eligible) {
+                $userModel->update(['is_eligible' => true]);
+            }
+        }
+
+        // Reload user to reflect updated eligibility or admin override
+        $user = $userModel->fresh();
 
         return view('user.dashboard', [
             'user' => $user,
@@ -46,8 +63,8 @@ class DashboardController extends Controller
             'activeElections' => $activeElectionsList->count(),
             'upcomingElections' => $upcomingElectionsList->count(),
             'closedElections' => $closedElectionsList->count(),
-            'skippedElections' => $skippedElectionsList->count(), // Will be 0 for new users
-            'userVotesCount' => $user->votes->count(),
+            'skippedElections' => $skippedCount,
+            'userVotesCount' => $user->votes()->count(),
         ]);
     }
 }

@@ -24,8 +24,8 @@
 
     <div class="card shadow-lg rounded-4 border-0 p-4 position-relative w-100" style="max-width: 420px;">
         <div class="text-center mb-4">
-            <h3 class="fw-bold text-primary">VoteMaster</h3>
-            <p class="text-muted">Voting Management System</p>
+            <h3 class="fw-bold text-primary text-white">VoteMaster</h3>
+            <p class=" text-white">Voting Management System</p>
         </div>
 
         <!-- Nav Tabs -->
@@ -58,7 +58,7 @@
             <div class="d-flex justify-content-between mb-3">
                 <div class="form-check">
                     <input type="checkbox" name="remember" class="form-check-input" id="remember">
-                    <label for="remember" class="form-check-label">Remember me</label>
+                    <label for="remember" class="form-check-label text-white">Remember me</label>
                 </div>
                 <a href="#" class="text-decoration-none">Forgot password?</a>
             </div>

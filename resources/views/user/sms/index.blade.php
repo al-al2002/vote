@@ -1,143 +1,80 @@
 @extends('layouts.user')
 
-@section('title', 'My Inbox')
+@section('title', 'Inbox')
 
 @section('content')
-    <div class="bg-white p-6 rounded-lg shadow-lg text-black relative">
-        {{-- Close Button --}}
-        <a href="{{ route('user.dashboard') }}"
-            class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 font-bold text-lg">
-            ×
-        </a>
+    <div class="max-w-md mx-auto mt-10 rounded-xl shadow-lg text-white p-5 bg-[#1E293B]">
 
-        <h2 class="text-xl font-bold mb-4">📥 My Inbox</h2>
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-2">
+            <h2 class="text-lg font-semibold">📥 Inbox</h2>
 
-        {{-- SweetAlert Notifications --}}
-        @if(session('success'))
-            <script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: "{{ session('success') }}",
-                    showConfirmButton: false,
-                    timer: 1800,
-                    position: 'top-end',
-                    toast: true
-                });
-            </script>
-        @endif
-
-        {{-- Create Message --}}
-        <div class="mb-6">
-            <form action="{{ route('user.messages.store') }}" method="POST" class="flex flex-col sm:flex-row gap-2">
-                @csrf
-                <input type="hidden" name="to" value="admin">
-                <input type="text" name="message" placeholder="Type your message to admin..." required
-                    class="flex-1 px-3 py-2 border rounded text-sm focus:ring-blue-400 focus:border-blue-400">
-                <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-semibold">
-                    Send
-                </button>
-            </form>
+            <div class="flex gap-2">
+                {{-- New Message --}}
+                <a href="{{ route('user.messages.create') }}"
+                    class="bg-blue-600 px-3 py-1 rounded-lg text-sm hover:bg-blue-700 transition">
+                    + New
+                </a>
+                {{-- Close / Back to Dashboard --}}
+                <a href="{{ route('user.dashboard') }}"
+                    class="bg-gray-500 px-3 py-1 rounded-lg text-sm hover:bg-gray-600 transition">
+                    ✖ Close
+                </a>
+            </div>
         </div>
 
-        {{-- Inbox Table --}}
-        @if($messages->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 border rounded-lg">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-2 text-left text-sm font-semibold">Message</th>
-                            <th class="px-4 py-2 text-left text-sm font-semibold">Status</th>
-                            <th class="px-4 py-2 text-center text-sm font-semibold">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach($messages as $message)
-                            <tr>
-                                {{-- Message + Admin Reply --}}
-                                <td class="px-4 py-2 flex flex-col gap-1">
-                                    <div class="flex items-start gap-2">
-                                        @if($message->user_status === 'unread')
-                                            <span class="w-3 h-3 bg-red-500 rounded-full mt-1 inline-block"></span>
-                                        @endif
-                                        <div>{{ $message->message }}</div>
-                                    </div>
+        {{-- Conversations list --}}
+        @forelse($messages as $conversation)
+            <div class="bg-gray-700 hover:bg-gray-600 p-3 rounded-lg transition flex flex-col gap-2 mb-2">
 
-                                    {{-- Admin Reply --}}
-                                    @if($message->reply)
-                                        <div class="mt-1 px-2 py-1 bg-blue-50 text-blue-800 rounded text-sm">
-                                            <strong>Admin Reply:</strong> {{ $message->reply }}
-                                        </div>
-                                    @endif
-                                </td>
+                <a href="{{ route('user.messages.conversation', $conversation->conversation_id) }}"
+                    class="flex items-center gap-3">
+                    {{-- Admin avatar --}}
+                    <div class="flex-shrink-0">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                            A
+                        </div>
+                    </div>
 
-                                {{-- Status --}}
-                                <td class="px-4 py-2">
-                                    <span
-                                        class="px-2 py-1 text-xs font-medium rounded-full
-                                                {{ $message->user_status === 'unread' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600' }}">
-                                        {{ ucfirst($message->user_status) }}
-                                    </span>
-                                </td>
+                    {{-- Message preview and name --}}
+                    <div class="flex-1 flex flex-col">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-sm">To:Admin</span>
+                            <small class="text-gray-400 text-xs">{{ $conversation->latest_time->diffForHumans() }}</small>
+                        </div>
+                        <p class="truncate text-gray-200 text-sm mt-1">
+                            @if($conversation->latest_message)
+                                {{ $conversation->latest_message }}
+                            @elseif($conversation->latest_image)
+                                <span class="italic text-gray-400">Image message</span>
+                            @else
+                                <span class="italic text-gray-400">No content</span>
+                            @endif
+                        </p>
+                    </div>
 
-                                {{-- Actions --}}
-                                <td class="px-4 py-2 text-center space-x-2">
-                                    {{-- Reply --}}
-                                    <form action="{{ route('user.messages.reply', $message->id) }}" method="POST"
-                                        class="inline-flex gap-1">
-                                        @csrf
-                                        <input type="text" name="message" placeholder="Type reply..." required
-                                            class="px-2 py-1 border rounded text-sm focus:ring-blue-400 focus:border-blue-400">
-                                        <button type="submit"
-                                            class="px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
-                                            Reply
-                                        </button>
-                                    </form>
+                    {{-- Unread badge --}}
+                    @if($conversation->unread_count > 0)
+                        <span class="ml-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                            {{ $conversation->unread_count }}
+                        </span>
+                    @endif
+                </a>
 
-                                    {{-- Delete --}}
-                                    <form action="{{ route('user.messages.delete', $message->id) }}" method="POST"
-                                        class="inline delete-form">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600">
-                                            Delete
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                {{-- Delete button --}}
+                <form action="{{ route('user.messages.destroy', $conversation->conversation_id) }}" method="POST"
+                    class="mt-2 text-right" onsubmit="return confirm('Are you sure you want to delete this conversation?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm transition">
+                        🗑 Delete Conversation
+                    </button>
+                </form>
             </div>
-        @else
-            <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded">
-                <p class="text-sm">No messages yet.</p>
-            </div>
-        @endif
+        @empty
+            <p class="text-center text-gray-400 mt-4">No messages yet. Click "New" to chat with Admin.</p>
+        @endforelse
     </div>
-
-    {{-- SweetAlert Delete Confirmation --}}
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll('.delete-form').forEach(function (form) {
-                form.addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        text: "This message will be deleted permanently!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#3085d6',
-                        confirmButtonText: 'Yes, delete it!'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.submit();
-                        }
-                    });
-                });
-            });
-        });
-    </script>
 @endsection

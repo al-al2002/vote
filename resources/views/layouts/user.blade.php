@@ -61,11 +61,11 @@
                     Live Monitor
                 </a>
 
-                <a href="{{ route('user.messages.index') }}"
-                    class="relative px-4 py-2 rounded-lg font-semibold transition
-                          {{ request()->routeIs('user.messages.*') ? 'bg-yellow-500 text-black' : 'bg-yellow-400 text-black hover:bg-yellow-500' }}">
+                {{-- 📥 Inbox Button (Popup Trigger) --}}
+                <button id="openInboxBtn"
+                    class="relative px-4 py-2 rounded-lg font-semibold bg-yellow-400 hover:bg-yellow-500 text-black transition">
                     📥 Inbox
-                </a>
+                </button>
 
                 {{-- User Dropdown --}}
                 <div class="relative">
@@ -90,36 +90,34 @@
                     </button>
 
                     {{-- Dropdown menu --}}
-                <div id="userMenu"
-                    class="absolute right-0 mt-2 w-48 bg-[#10243F] border border-gray-700 rounded-lg shadow-lg hidden z-50">
-
-                    <a href="{{ route('user.profile.edit') }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
-                        Edit Profile
-                    </a>
-
-                    <a href="{{ route('user.profile.settings') }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
-                        Settings
-                    </a>
-
-                    <a href="{{ route('user.password.change') }}" class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
-                        Change Password
-                    </a>
-
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-gray-700">
-                            Logout
-                        </button>
-                    </form>
-                </div>
-
+                    <div id="userMenu"
+                        class="absolute right-0 mt-2 w-48 bg-[#10243F] border border-gray-700 rounded-lg shadow-lg hidden z-50">
+                        <a href="{{ route('user.profile.edit') }}"
+                            class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
+                            Edit Profile
+                        </a>
+                        <a href="{{ route('user.profile.settings') }}"
+                            class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
+                            Settings
+                        </a>
+                        <a href="{{ route('user.password.change') }}"
+                            class="block px-4 py-2 text-sm text-white hover:bg-gray-700">
+                            Change Password
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit"
+                                class="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-gray-700">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-
         </div>
     </header>
 
-    {{-- Toggle Dropdown --}}
+    {{-- User Menu Toggle --}}
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const btn = document.getElementById("userMenuBtn");
@@ -135,6 +133,42 @@
                     menu.classList.add("hidden");
                 }
             });
+        });
+    </script>
+
+    {{-- 📥 Inbox Modal --}}
+    <div id="inboxModal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm justify-center items-center z-50">
+        <div class="bg-[#10243F] rounded-2xl shadow-2xl w-full max-w-2xl text-white relative p-6 overflow-hidden">
+            <button id="closeInboxBtn" class="absolute top-3 right-3 text-gray-400 hover:text-white text-xl">✖</button>
+            <div id="inboxContent" class="h-[70vh] overflow-y-auto custom-scrollbar">
+                <p class="text-gray-400 text-center mt-10">Loading inbox...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const openBtn = document.getElementById('openInboxBtn');
+        const closeBtn = document.getElementById('closeInboxBtn');
+        const modal = document.getElementById('inboxModal');
+        const inboxContent = document.getElementById('inboxContent');
+
+        openBtn.addEventListener('click', async () => {
+            // show modal as flex (remove hidden, add flex)
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            try {
+                const response = await fetch('{{ route("user.messages.index") }}');
+                inboxContent.innerHTML = await response.text();
+            } catch {
+                inboxContent.innerHTML = '<p class="text-red-400 text-center mt-10">Failed to load inbox.</p>';
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            // hide modal (remove flex, add hidden)
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
         });
     </script>
 

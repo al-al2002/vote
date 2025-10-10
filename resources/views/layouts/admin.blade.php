@@ -144,7 +144,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M15 19.128a9.38 9.38 0 01-6 0M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm6.75 4.5a6.75 6.75 0 10-13.5 0h13.5z" />
                     </svg>
-                    Manage Voters
+                    Voters
                 </a>
 
                 <a href="{{ route('admin.results') }}"
@@ -157,14 +157,14 @@
                     Results
                 </a>
 
-                <a href="{{ route('admin.live-monitor') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
-                    {{ request()->routeIs('admin.live-monitor*') ? 'active' : '' }}">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-6h6v6m-3-9V5m0 0L9 9m3-4l3 4" />
-                    </svg>
-                    Live Monitor
-                </a>
+            <a href="{{ route('admin.live-monitor') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
+               {{ request()->routeIs('admin.live-monitor*') ? 'active' : '' }}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 7h20v13H2zM8 7l4-4 4 4" />
+                </svg>
+                Live Monitor
+            </a>
+
             </div>
         </nav>
 
@@ -202,8 +202,8 @@
                     </svg>
 
                 @php
-                    use App\Models\Message;
-                    $unreadCount = Message::where('status', 'unread')->count();
+use App\Models\Message;
+$unreadCount = Message::where('status', 'unread')->count();
                 @endphp
 
 

@@ -58,7 +58,9 @@
             <p class="text-3xl font-bold mt-1">{{ $skippedElections }}</p>
         </div>
 
-        <div class="flex-1 min-w-[150px] p-6 rounded-xl shadow-sm border border-gray-200 bg-[#09182D] text-white">
+        {{-- ✅ Votes Cast clickable --}}
+        <div onclick="showSection('votes')"
+            class="cursor-pointer flex-1 min-w-[150px] p-6 rounded-xl shadow-sm border border-gray-200 bg-[#09182D] text-white hover:bg-[#0f2b4f] transition">
             <p class="text-gray-300 text-sm font-medium">Votes Cast</p>
             <p class="text-3xl font-bold mt-1">{{ $userVotesCount }}</p>
         </div>
@@ -165,6 +167,33 @@
                 @endforelse
             </div>
         </div>
+
+        {{-- ✅ Votes Cast Section --}}
+        <div id="votes-section" class="hidden mb-8">
+            <h3 class="text-2xl font-bold text-white mb-6">Votes Cast</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @forelse($user->votes as $vote)
+                    <div class="p-6 rounded-xl shadow-sm border border-gray-700 bg-[#10243F]">
+                        <h4 class="text-xl font-bold text-green-400">{{ $vote->election->title ?? 'Unknown Election' }}</h4>
+                        <p class="text-gray-300 mt-2">
+                            Candidate: <span class="font-semibold">{{ $vote->candidate->name ?? 'N/A' }}</span>
+                        </p>
+                        <p class="text-sm text-gray-400 mt-2">
+                            Voted at: {{ $vote->created_at->timezone('Asia/Manila')->format('M d, Y h:i A') }}
+                        </p>
+                        <div class="mt-4">
+                            {{-- ✅ Fix: Pass election ID so route works --}}
+                            <a href="{{ route('user.vote.downloadPDF', ['election' => $vote->election->id]) }}"
+                                class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-semibold">
+                                Download Receipt
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-gray-400 col-span-full text-center">You haven’t voted yet.</p>
+                @endforelse
+            </div>
+        </div>
     </div>
 
     {{-- Voting History --}}
@@ -188,6 +217,7 @@
             document.getElementById('upcoming-section').classList.add('hidden');
             document.getElementById('closed-section').classList.add('hidden');
             document.getElementById('skipped-section').classList.add('hidden');
+            document.getElementById('votes-section').classList.add('hidden');
             document.getElementById(section + '-section').classList.remove('hidden');
         }
 

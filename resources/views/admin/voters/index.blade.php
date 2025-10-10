@@ -36,7 +36,22 @@
                         @foreach($voters as $voter)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-2">{{ $voter->voter_id }}</td>
-                                <td class="px-4 py-2 font-medium text-gray-800">{{ $voter->name }}</td>
+                            <td class="px-4 py-2 flex items-center gap-3">
+                                @if($voter->profile_photo)
+                                    <img src="{{ asset('storage/' . $voter->profile_photo) }}" alt="{{ $voter->name }}'s photo"
+                                        class="w-10 h-10 rounded-full object-cover border border-gray-300">
+                                @else
+                                    <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5.121 17.804A9.004 9.004 0 0112 15c2.21 0 4.21.804 5.879 2.14M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+                                @endif
+
+                                <span class="font-medium text-gray-800">{{ $voter->name }}</span>
+                            </td>
+
                                 <td class="px-4 py-2 text-gray-600">{{ $voter->email }}</td>
 
                                 {{-- Skipped elections --}}

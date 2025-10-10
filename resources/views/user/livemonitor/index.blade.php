@@ -5,11 +5,12 @@
 @section('content')
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">Live Monitor</h1>
+            <h1 class="text-2xl font-bold text-yellow-400" >Live Monitor</h1>
             <a href="{{ route('user.dashboard') }}"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition">
-                ← Back to Dashboard
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2">
+                &times; Close
             </a>
+
         </div>
 
         @forelse($activeElections as $election)
