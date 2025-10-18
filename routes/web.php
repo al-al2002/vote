@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 // ----------------------
 // Controllers
@@ -48,6 +49,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // Admin Routes
 // ----------------------
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(function () {
+
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('elections', AdminElectionController::class);
@@ -65,11 +67,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'isAdmin'])->group(f
     // Admin SMS / Inbox
     Route::get('/sms', [SmsController::class, 'index'])->name('sms.index'); // Inbox (list of conversations)
     Route::get('/sms/conversation/{conversation_id}', [SmsController::class, 'conversation'])->name('sms.conversation'); // View conversation
-    Route::post('/sms/reply/{conversation_id}', [SmsController::class, 'reply'])->name('sms.reply'); // Reply to conversation
-    Route::patch('/sms/read/{id}', [SmsController::class, 'markAsRead'])->name('sms.read'); // Mark a message as read
-    Route::delete('/sms/delete/{id}', [SmsController::class, 'destroy'])->name('sms.delete'); // Delete a message
+    Route::post('/sms/reply/{conversation_id}', [SmsController::class, 'reply'])->name('sms.reply'); // Reply
+    Route::patch('/sms/read/{id}', [SmsController::class, 'markAsRead'])->name('sms.read'); // Mark as read
+    Route::delete('/sms/delete/{id}', [SmsController::class, 'destroy'])->name('sms.delete'); // Delete
+    Route::delete('sms/conversation/{conversation_id}', [SmsController::class, 'destroyConversation'])->name('sms.destroyConversation');
 });
 
+// Admin unread count
+Route::get('/admin/sms/unread-count', function () {
+    return response()->json([
+        'count' => \App\Models\Message::where('status', 'unread')
+            ->where('sender_type', 'user')
+            ->where('to', 'admin')
+            ->count(),
+    ]);
+})->name('admin.sms.unread-count');
 
 // ----------------------
 // User Routes
@@ -102,14 +114,26 @@ Route::prefix('user')->name('user.')->middleware(['auth'])->group(function () {
     Route::get('/profile/password/change', [PasswordController::class, 'edit'])->name('password.change');
     Route::post('/profile/password/change', [PasswordController::class, 'update'])->name('password.update');
 
-    // Messages / Inbox
-   Route::get('/sms', [MessageController::class, 'index'])->name('messages.index'); // Inbox list
-    Route::post('/sms', [MessageController::class, 'store'])->name('messages.store'); // Send new
-    Route::get('/sms/conversation/{conversation_id}', [MessageController::class, 'conversation'])->name('messages.conversation'); // View conversation
-    Route::post('/sms/reply/{conversation_id}', [MessageController::class, 'reply'])->name('messages.reply'); // Reply in conversation
-    Route::delete('/sms/{id}', [MessageController::class, 'destroy'])->name('messages.destroy'); // Delete
- Route::get('/sms/create', [MessageController::class, 'create'])->name('messages.create');
+    //User / Inbox
+    Route::prefix('sms')->name('messages.')->group(function () {
+        Route::get('/', [MessageController::class, 'index'])->name('index'); // Inbox list
+        Route::get('/create', [MessageController::class, 'create'])->name('create'); // New message form
+        Route::post('/', [MessageController::class, 'store'])->name('store'); // Send new
+        Route::get('/conversation/{conversation_id}', [MessageController::class, 'conversation'])->name('conversation'); // View conversation
+        Route::post('/reply/{conversation_id}', [MessageController::class, 'reply'])->name('reply'); // Reply in conversation
+        Route::delete('/conversation/{conversation_id}', [MessageController::class, 'destroyConversation'])->name('destroyConversation'); // Permanently delete conversation for user
+    });
 
     // Vote Receipt PDF
     Route::get('/vote/download-pdf/{election}', [VoteController::class, 'downloadPDF'])->name('vote.downloadPDF');
 });
+
+// User unread count
+Route::get('/user/unread-count', function () {
+    $count = \App\Models\Message::where('to', 'user')
+        ->where('status', 'unread')
+        ->where('user_id', Auth::id())
+        ->count();
+
+    return response()->json(['count' => $count]);
+})->name('user.unread.count');

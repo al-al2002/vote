@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'VoteMaster')</title>
+
+    {{-- Tailwind + Chart.js --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -32,7 +35,6 @@
             background: rgba(255, 255, 255, 0.15);
         }
 
-        /* Orange corner triangle for active menu item */
         .menu-item.active::after {
             content: '';
             position: absolute;
@@ -54,15 +56,6 @@
         .content-area {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
-
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-        }
     </style>
 </head>
 
@@ -71,22 +64,20 @@
     {{-- Sidebar --}}
     <div class="sidebar-gradient w-64 shadow-2xl flex flex-col">
         {{-- Logo --}}
-        <div class="p-6 border-b border-white border-opacity-20">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-white font-bold text-lg">VoteMaster</h1>
-                    <p class="text-gray-300 text-xs">Admin Panel</p>
-                </div>
+    <div class="p-6 border-b border-white border-opacity-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center">
+                <img src="{{ asset('images/votemaster.png') }}" alt="VoteMaster Logo" class="w-full h-full object-contain">
+            </div>
+            <div>
+                <h1 class="text-yellow-400 font-bold text-lg">VoteMaster</h1>
+                <p class="text-gray-300 text-xs">Admin Panel</p>
             </div>
         </div>
+    </div>
 
-        {{-- Admin Profile --}}
+
+        {{-- Admin Info --}}
         <div class="p-6 border-b border-white border-opacity-20">
             <div class="flex items-center space-x-3">
                 <div
@@ -105,7 +96,7 @@
             </div>
         </div>
 
-        {{-- Sidebar Menu --}}
+        {{-- Menu --}}
         <nav class="flex-1 py-6 sidebar-scroll">
             <div class="px-4 space-y-2">
                 <a href="{{ route('admin.dashboard') }}"
@@ -136,11 +127,10 @@
                     Candidates
                 </a>
 
-                <a href="{{ route('admin.voters.index') }}" class="menu-item flex items-center gap-2 px-4 py-3 text-white rounded-lg
-                   @if(request()->routeIs('admin.voters') || request()->routeIs('admin.voters.*')) active @endif">
-                    {{-- User Group Icon --}}
+                <a href="{{ route('admin.voters.index') }}"
+                    class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.voters.*')) active @endif">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="w-5 h-5">
+                        stroke="currentColor" class="w-5 h-5 mr-3">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M15 19.128a9.38 9.38 0 01-6 0M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm6.75 4.5a6.75 6.75 0 10-13.5 0h13.5z" />
                     </svg>
@@ -151,20 +141,19 @@
                     class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.results')) active @endif">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-6h6v6m-3-9V5m0 0L9 9m3-4l3 4">
-                        </path>
+                            d="M9 17v-6h6v6m-3-9V5m0 0L9 9m3-4l3 4"></path>
                     </svg>
                     Results
                 </a>
 
-            <a href="{{ route('admin.live-monitor') }}" class="menu-item flex items-center px-4 py-3 text-white rounded-lg
-               {{ request()->routeIs('admin.live-monitor*') ? 'active' : '' }}">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 7h20v13H2zM8 7l4-4 4 4" />
-                </svg>
-                Live Monitor
-            </a>
-
+                <a href="{{ route('admin.live-monitor') }}"
+                    class="menu-item flex items-center px-4 py-3 text-white rounded-lg @if(request()->routeIs('admin.live-monitor')) active @endif">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M2 7h20v13H2zM8 7l4-4 4 4" />
+                    </svg>
+                    Live Monitor
+                </a>
             </div>
         </nav>
 
@@ -184,7 +173,7 @@
         </div>
     </div>
 
-    {{-- Main Content --}}
+    {{-- Main --}}
     <div class="flex-1 flex flex-col overflow-hidden">
         <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex justify-between items-center">
             <div>
@@ -192,35 +181,54 @@
                 <p class="text-gray-600 text-sm">Welcome back, manage your voting system</p>
             </div>
 
-            {{-- 🔔 SMS Inbox Icon with Badge --}}
-            <div class="flex items-center gap-6">
-                <a href="{{ route('admin.sms.index') }}" class="relative flex items-center">
-                    <svg class="w-6 h-6 text-gray-600 hover:text-[#09182D]" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 12.79V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6.79a2 2 0 00.89 1.664L12 21l8.11-6.546A2 2 0 0021 12.79z" />
-                    </svg>
+        {{-- 💬 SMS Inbox --}}
+        <div class="flex items-center gap-6">
+            <a href="{{ route('admin.sms.index') }}" class="relative flex items-center">
+                {{-- SMS icon --}}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"
+                    class="w-6 h-6 text-gray-600 hover:text-[#09182D] transition">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 8.25c0-1.243 1.007-2.25 2.25-2.25h15a2.25 2.25 0 012.25 2.25v7.5a2.25 2.25 0 01-2.25 2.25H6.75L2.25 21V8.25z" />
+                </svg>
 
-                @php
-use App\Models\Message;
-$unreadCount = Message::where('status', 'unread')->count();
-                @endphp
+                {{-- Unread badge --}}
+                <span id="unreadBadge"
+                    class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    0
+                </span>
+            </a>
+        </div>
 
-
-                    @if($unreadCount > 0)
-                        <span
-                            class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                            {{ $unreadCount }}
-                        </span>
-                    @endif
-                </a>
-            </div>
         </header>
 
         <main class="flex-1 overflow-y-auto content-area p-6">
             @yield('content')
         </main>
     </div>
+
+    {{-- Auto-refresh unread badge --}}
+    <script>
+        async function refreshUnreadCount() {
+            try {
+                const response = await fetch("{{ route('admin.sms.unread-count') }}");
+                const data = await response.json();
+                const badge = document.getElementById("unreadBadge");
+
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.classList.remove("hidden");
+                } else {
+                    badge.classList.add("hidden");
+                }
+            } catch (err) {
+                console.error("Failed to refresh unread count:", err);
+            }
+        }
+
+        // Run immediately and every 5 seconds
+        refreshUnreadCount();
+        setInterval(refreshUnreadCount, 5000);
+    </script>
 
 </body>
 

@@ -13,7 +13,7 @@
                 </h2>
                 <div class="flex gap-2">
                     <a href="{{ route('user.messages.index') }}"
-                        class="bg-gray-500 px-3 py-1 rounded-lg text-sm hover:bg-gray-600 transition">
+                        class="bg-red-500 px-3 py-1 rounded-lg text-sm hover:bg-gray-600 transition">
                         ✖ Close
                     </a>
                 </div>
@@ -23,24 +23,37 @@
             <div id="messagesContainer"
                 class="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
                 @forelse ($messages as $msg)
-                    <div class="flex {{ $msg->sender_type === 'user' ? 'justify-end' : 'justify-start' }} animate-fade-in">
-                        <div
-                            class="{{ $msg->sender_type === 'user' ? 'bg-blue-600' : 'bg-gray-700' }} px-4 py-2 max-w-[60%] flex flex-col gap-1 rounded-lg relative">
-                            @if($msg->message)
-                                <p>{{ $msg->message }}</p>
-                            @endif
-                            @if($msg->image)
-                                <img src="{{ asset('storage/' . $msg->image) }}" class="rounded-lg max-w-full">
-                            @endif
-                            <span class="text-gray-300 text-xs self-end">{{ $msg->created_at->format('H:i') }}</span>
-                        </div>
-                    </div>
+                                    <div class="flex {{ $msg->sender_type === 'user' ? 'justify-end' : 'justify-start' }} animate-fade-in">
+                                        <div
+                                            class="{{ $msg->sender_type === 'user' ? 'bg-blue-600' : 'bg-gray-700' }} px-4 py-2 max-w-[60%] flex flex-col gap-1 rounded-lg relative">
+
+                                            {{-- Message text --}}
+                                            @if($msg->message)
+                                                <p>{{ $msg->message }}</p>
+                                            @endif
+
+                                            {{-- Message images --}}
+                                            @php
+                    $images = !empty($msg->image) ? json_decode($msg->image, true) : [];
+                                            @endphp
+                                            @if(is_array($images) && count($images) > 0)
+                                                <div class="flex flex-wrap gap-2 mt-1">
+                                                    @foreach($images as $img)
+                                                        <img src="{{ asset('storage/' . $img) }}" class="rounded-lg max-w-full">
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                        <span class="text-gray-300 text-xs self-end">{{ $msg->created_at->format('h:i A') }}</span>
+
+                                        </div>
+                                    </div>
                 @empty
                     <p class="text-center text-gray-400 mt-4">No messages yet.</p>
                 @endforelse
             </div>
 
-            {{-- Image Preview Area --}}
+            {{-- Image Preview --}}
             <div id="previewContainer" class="flex gap-2 px-4 py-2 overflow-x-auto"></div>
 
             {{-- Reply form --}}
@@ -69,38 +82,22 @@
         </div>
     </div>
 
-    {{-- Tailwind animation --}}
+    {{-- Animations --}}
     <style>
-        @keyframes fade-in-right {
+        @keyframes fade-in {
             0% {
                 opacity: 0;
-                transform: translateX(50px);
+                transform: translateY(10px);
             }
 
             100% {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0);
             }
         }
 
-        @keyframes fade-in-left {
-            0% {
-                opacity: 0;
-                transform: translateX(-50px);
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .animate-fade-in-right {
-            animation: fade-in-right 0.3s ease-out;
-        }
-
-        .animate-fade-in-left {
-            animation: fade-in-left 0.3s ease-out;
+        .animate-fade-in {
+            animation: fade-in 0.25s ease-out;
         }
     </style>
 
@@ -111,7 +108,16 @@
         const previewContainer = document.getElementById('previewContainer');
         let selectedFiles = [];
 
-        // Preview selected images with remove button
+        // Auto-scroll to bottom on load
+        window.addEventListener('load', () => {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+
+        const scrollToBottom = () => {
+            messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
+        };
+
+        // Image preview
         imageInput.addEventListener('change', () => {
             previewContainer.innerHTML = '';
             selectedFiles = Array.from(imageInput.files);
@@ -125,13 +131,12 @@
                 img.className = 'w-full h-full object-cover';
                 wrapper.appendChild(img);
 
-                // Remove button
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
                 removeBtn.innerHTML = '×';
                 removeBtn.className = 'absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs';
                 removeBtn.addEventListener('click', () => {
-                    selectedFiles.splice(index, 1);
+                    selectedFiles.splice(selectedFiles.indexOf(file), 1);
                     wrapper.remove();
                 });
                 wrapper.appendChild(removeBtn);
@@ -140,29 +145,14 @@
             });
         });
 
-        // Handle send
+        // Send message
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!form.message.value && selectedFiles.length === 0) return;
 
-            const formData = new FormData(form);
+            const formData = new FormData();
+            formData.append('message', form.message.value);
             selectedFiles.forEach(file => formData.append('image[]', file));
-
-            // Optimistic UI: show text bubble + images
-            const bubble = document.createElement('div');
-            bubble.className = 'flex justify-end animate-fade-in-right';
-            let imagesHTML = '';
-            selectedFiles.forEach(file => {
-                imagesHTML += `<img src="${URL.createObjectURL(file)}" class="rounded-lg max-w-full mb-1">`;
-            });
-            bubble.innerHTML = `
-            <div class="bg-blue-600 px-4 py-2 max-w-[60%] flex flex-col gap-1 rounded-lg relative">
-                ${form.message.value ? `<p>${form.message.value}</p>` : ''}
-                ${imagesHTML}
-            </div>
-        `;
-            messagesContainer.appendChild(bubble);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
             try {
                 const response = await fetch('{{ route("user.messages.reply", $conversation_id) }}', {
@@ -170,22 +160,46 @@
                     body: formData,
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                 });
+
+                if (!response.ok) throw new Error('Network response was not ok');
+
                 const data = await response.json();
-                if (!data.success) throw new Error('Upload failed');
 
-                // Replace preview URLs with actual stored URLs
-                const imgTags = bubble.querySelectorAll('img');
-                data.messages.forEach((msg, i) => {
-                    if (msg.image && imgTags[i]) {
-                        imgTags[i].src = '{{ asset("storage") }}/' + msg.image;
+                if (data.success) {
+                    const msg = data.message;
+
+                    // Build images HTML
+                    let imagesHTML = '';
+                    const images = msg.image ? JSON.parse(msg.image) : [];
+                    if (images.length > 0) {
+                        imagesHTML = images.map(img => `<img src="/storage/${img}" class="rounded-lg max-w-full mb-1">`).join('');
+                        imagesHTML = `<div class="flex flex-wrap gap-2 mt-1">${imagesHTML}</div>`;
                     }
-                });
 
-                form.reset();
-                previewContainer.innerHTML = '';
-                selectedFiles = [];
+                    // Create message bubble
+                    const bubble = document.createElement('div');
+                    bubble.className = 'flex justify-end animate-fade-in';
+                    bubble.innerHTML = `
+                    <div class="bg-blue-600 px-4 py-2 max-w-[60%] flex flex-col gap-1 rounded-lg relative">
+                        ${msg.message ? `<p>${msg.message}</p>` : ''}
+                        ${imagesHTML}
+                        <span class="text-gray-300 text-xs self-end">Now</span>
+                    </div>
+                `;
+
+                    messagesContainer.appendChild(bubble);
+                    scrollToBottom();
+
+                    // Reset form
+                    form.reset();
+                    previewContainer.innerHTML = '';
+                    selectedFiles = [];
+                } else {
+                    alert(data.errors ? JSON.stringify(data.errors) : '❌ Failed to send message.');
+                }
             } catch (err) {
-                alert('Failed to send message.');
+                console.error(err);
+                alert('❌ Failed to send message.');
             }
         });
     </script>

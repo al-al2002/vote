@@ -1,3 +1,13 @@
+@php
+$logoPath = public_path('images/votemaster.png');
+$logoBase64 = '';
+if (file_exists($logoPath)) {
+    $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+    $data = file_get_contents($logoPath);
+    $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+}
+@endphp
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,21 +22,27 @@
         }
 
         .header {
-            text-align: center;
+            display: flex;
+            align-items: center;
             border-bottom: 2px solid #09182D;
             padding-bottom: 10px;
             margin-bottom: 30px;
         }
 
-        .header h1 {
+        .header img {
+            height: 60px;
+            margin-right: 15px;
+        }
+
+        .header-text h1 {
             font-size: 24px;
             margin: 0;
             color: #09182D;
         }
 
-        .header p {
+        .header-text p {
             font-size: 14px;
-            margin: 2px 0 0;
+            margin: 3px 0 0;
         }
 
         .info {
@@ -63,26 +79,18 @@
             margin-top: 40px;
             color: #777;
         }
-
-        .signature {
-            margin-top: 60px;
-            text-align: right;
-            font-size: 14px;
-        }
-
-        .signature span {
-            display: inline-block;
-            border-top: 1px solid #000;
-            padding-top: 3px;
-        }
     </style>
 </head>
 
 <body>
-    <div class="header">
-        <h1>Official Voting Receipt</h1>
-        <p>Generated on {{ now()->format('F d, Y h:i A') }}</p>
-    </div>
+<div class="header"
+    style="text-align: center; border-bottom: 2px solid #09182D; padding-bottom: 20px; margin-bottom: 30px;">
+    @if($logoBase64)
+        <img src="{{ $logoBase64 }}" alt="VoteMaster Logo" style="height:120px; margin-bottom: 10px;">
+    @endif
+    <h1 style="font-size: 28px; margin: 0; color: #09182D;">Official Voting Receipt</h1>
+    <p style="font-size: 14px; margin: 5px 0 0;">Generated on {{ now()->format('F d, Y h:i A') }}</p>
+</div>
 
     <div class="info">
         <p><strong>Voter Name:</strong> {{ $user->name }}</p>
@@ -111,10 +119,7 @@
         </tbody>
     </table>
 
-
-
     <div class="footer">
-
         <p>© {{ date('Y') }} Voting Management System</p>
     </div>
 </body>
