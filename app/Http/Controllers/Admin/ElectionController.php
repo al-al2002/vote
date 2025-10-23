@@ -131,41 +131,48 @@ class ElectionController extends Controller
     /**
      * Show election results with winners, ties, and total votes.
      */
-    public function results(Request $request)
-    {
-        $now = Carbon::now();
-        $filter = $request->get('status');
+   public function results(Request $request)
+{
+    $now = Carbon::now();
+    $filter = $request->get('status');
 
-        $query = Election::with(['candidates' => fn($q) => $q->withCount('votes')]);
+    $query = Election::with(['candidates' => fn($q) => $q->withCount('votes')]);
 
-        if ($filter === 'active') {
-            $query->where('start_date', '<=', $now)
-                  ->where('end_date', '>=', $now);
-        } elseif ($filter === 'upcoming') {
-            $query->where('start_date', '>', $now);
-        } elseif ($filter === 'closed') {
-            $query->where('end_date', '<', $now);
-        }
-
-        $elections = $query->orderBy('start_date', 'asc')->get();
-
-        foreach ($elections as $election) {
-            $candidates = $election->candidates ?? collect();
-
-            // Total votes for this election
-            $election->total_votes = (int) $candidates->sum(fn($c) => $c->votes_count ?? $c->votes()->count());
-
-            // Determine winners
-            if ($election->total_votes > 0) {
-                $maxVotes = $candidates->max(fn($c) => $c->votes_count ?? $c->votes()->count());
-                $election->winners = $candidates
-                    ->filter(fn($c) => ($c->votes_count ?? $c->votes()->count()) === $maxVotes)
-                    ->values();
-            } else {
-                $election->winners = collect();
-            }
-        }
-
-        return view('admin.results.index', compact('elections', 'filter'));
+    if ($filter === 'active') {
+        $query->where('start_date', '<=', $now)
+              ->where('end_date', '>=', $now);
+    } elseif ($filter === 'upcoming') {
+        $query->where('start_date', '>', $now);
+    } elseif ($filter === 'closed') {
+        $query->where('end_date', '<', $now);
     }
+
+    $elections = $query->orderBy('start_date', 'asc')->get();
+
+    foreach ($elections as $election) {
+        $candidates = $election->candidates ?? collect();
+
+        // Total votes for this election
+        $election->total_votes = (int) $candidates->sum(fn($c) => $c->votes_count ?? 0);
+
+        // 🏆 Determine winners with tie support
+        if ($election->total_votes > 0) {
+            $maxVotes = $candidates->max('votes_count');
+
+            // All candidates with same max votes (tie supported)
+            $election->winners = $candidates
+                ->filter(fn($c) => $c->votes_count === $maxVotes)
+                ->values();
+
+            // Mark if tie
+            $election->isTie = $election->winners->count() > 1;
+        } else {
+            $election->winners = collect();
+            $election->isTie = false;
+        }
+    }
+
+    return view('admin.results.index', compact('elections', 'filter'));
+}
+
 }

@@ -3,23 +3,23 @@
 @section('title', 'Manage Elections')
 
 @section('content')
-    <h1 class="text-2xl font-bold mb-4 text-[#09182D]">Elections</h1>
+            <h1 class="text-2xl font-bold mb-4 text-[#09182D]">Elections</h1>
 
-    <div class="flex justify-between items-center mb-4">
-        <a href="{{ route('admin.elections.create') }}"
-            class="bg-[#09182D] text-white px-4 py-2 rounded-lg hover:bg-[#0f2345] transition">+ New Election</a>
+            <div class="flex justify-between items-center mb-4">
+                <a href="{{ route('admin.elections.create') }}"
+                    class="bg-[#09182D] text-white px-4 py-2 rounded-lg hover:bg-[#0f2345] transition">+ New Election</a>
 
-        {{-- Filter --}}
-        <form method="GET" action="{{ route('admin.elections.index') }}">
-            <select name="status" onchange="this.form.submit()"
-                class="border border-[#09182D] rounded-lg px-3 py-2 text-[#09182D]">
-                <option value="">All</option>
-                <option value="active" {{ $filter === 'active' ? 'selected' : '' }}>Active</option>
-                <option value="upcoming" {{ $filter === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
-                <option value="closed" {{ $filter === 'closed' ? 'selected' : '' }}>Closed</option>
-            </select>
-        </form>
-    </div>
+                {{-- Filter --}}
+                <form method="GET" action="{{ route('admin.elections.index') }}">
+                    <select name="status" onchange="this.form.submit()"
+                        class="border border-[#09182D] rounded-lg px-3 py-2 text-[#09182D]">
+                        <option value="">All</option>
+                        <option value="active" {{ $filter === 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="upcoming" {{ $filter === 'upcoming' ? 'selected' : '' }}>Upcoming</option>
+                        <option value="closed" {{ $filter === 'closed' ? 'selected' : '' }}>Closed</option>
+                    </select>
+                </form>
+            </div>
 
     <table class="min-w-full mt-6 border border-gray-200">
         <thead>
@@ -35,23 +35,30 @@
             @forelse ($elections as $election)
                 <tr>
                     <td class="px-4 py-2 border">{{ $election->title }}</td>
-                    <td class="px-4 py-2 border">{{ $election->start_date }}</td>
-                    <td class="px-4 py-2 border">{{ $election->end_date }}</td>
+                    <td class="px-4 py-2 border">
+                        {{ \Carbon\Carbon::parse($election->start_date)->format('F d, Y h:i A') }}
+                    </td>
+                    <td class="px-4 py-2 border">
+                        {{ \Carbon\Carbon::parse($election->end_date)->format('F d, Y h:i A') }}
+                    </td>
                     <td class="px-4 py-2 border">
                         @php
-                            $today = now();
-                            if ($election->start_date > $today) {
+                            $now = now();
+                            $start = \Carbon\Carbon::parse($election->start_date);
+                            $end = \Carbon\Carbon::parse($election->end_date);
+
+                            if ($start->gt($now)) {
                                 $status = 'Upcoming';
-                            } elseif ($election->end_date < $today) {
+                            } elseif ($end->lt($now)) {
                                 $status = 'Closed';
                             } else {
                                 $status = 'Active';
                             }
                         @endphp
                         <span class="px-2 py-1 rounded
-                                        {{ $status === 'Active' ? 'bg-green-100 text-green-700' : '' }}
-                                        {{ $status === 'Upcoming' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                        {{ $status === 'Closed' ? 'bg-red-100 text-red-700' : '' }}">
+                                            {{ $status === 'Active' ? 'bg-green-100 text-green-700' : '' }}
+                                            {{ $status === 'Upcoming' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                            {{ $status === 'Closed' ? 'bg-red-100 text-red-700' : '' }}">
                             {{ $status }}
                         </span>
                     </td>
@@ -76,60 +83,62 @@
         </tbody>
     </table>
 
-    {{-- SweetAlert2 --}}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script>
-        // Delete confirmation for elections
-        document.querySelectorAll('.delete-election-form').forEach(form => {
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "This election will be permanently deleted!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
+
+            {{-- SweetAlert2 --}}
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+            <script>
+                // Delete confirmation for elections
+                document.querySelectorAll('.delete-election-form').forEach(form => {
+                    form.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        Swal.fire({
+                            title: 'Are you sure?',
+                            text: "This election will be permanently deleted!",
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Yes, delete it!',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.submit();
+                            }
+                        });
+                    });
                 });
-            });
-        });
 
-        // Success / Error popups
-        document.addEventListener('DOMContentLoaded', function () {
-            @if(session('success'))
-                setTimeout(() => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: "{{ session('success') }}",
-                        timer: 1000,
-                        showConfirmButton: false,
-                        position: 'top-end',
-                        toast: true
-                    });
-                }, 200);
-            @endif
+                // Success / Error popups
+                document.addEventListener('DOMContentLoaded', function () {
+                    @if(session('success'))
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: "{{ session('success') }}",
+                                timer: 1000,
+                                showConfirmButton: false,
+                                position: 'top-end',
+                                toast: true
+                            });
+                        }, 200);
+                    @endif
 
-            @if(session('error'))
-                setTimeout(() => {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: "{{ session('error') }}",
-                        timer: 1000,
-                        showConfirmButton: false,
-                        position: 'top-end',
-                        toast: true
-                    });
-                }, 200);
-            @endif
-        });
-    </script>
+                    @if(session('error'))
+                        setTimeout(() => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: "{{ session('error') }}",
+                                timer: 1000,
+                                showConfirmButton: false,
+                                position: 'top-end',
+                                toast: true
+                            });
+                        }, 200);
+                    @endif
+                });
+            </script>
 @endsection

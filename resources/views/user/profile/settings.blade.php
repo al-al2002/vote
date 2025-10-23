@@ -11,6 +11,5 @@
 
         <h2 class="text-xl font-bold mb-4">Profile Settings</h2>
 
-        <p class="text-gray-300">Here you can manage extra profile settings.</p>
     </div>
 @endsection

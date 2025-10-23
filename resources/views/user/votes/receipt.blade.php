@@ -1,11 +1,11 @@
 @php
-$logoPath = public_path('images/votemaster.png');
-$logoBase64 = '';
-if (file_exists($logoPath)) {
-    $type = pathinfo($logoPath, PATHINFO_EXTENSION);
-    $data = file_get_contents($logoPath);
-    $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-}
+    $logoPath = public_path('images/votemaster.png');
+    $logoBase64 = '';
+    if (file_exists($logoPath)) {
+        $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+        $data = file_get_contents($logoPath);
+        $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+    }
 @endphp
 
 <!DOCTYPE html>
@@ -22,27 +22,26 @@ if (file_exists($logoPath)) {
         }
 
         .header {
-            display: flex;
-            align-items: center;
+            text-align: center;
             border-bottom: 2px solid #09182D;
-            padding-bottom: 10px;
+            padding-bottom: 20px;
             margin-bottom: 30px;
         }
 
         .header img {
-            height: 60px;
-            margin-right: 15px;
+            height: 120px;
+            margin-bottom: 10px;
         }
 
-        .header-text h1 {
-            font-size: 24px;
+        .header h1 {
+            font-size: 28px;
             margin: 0;
             color: #09182D;
         }
 
-        .header-text p {
+        .header p {
             font-size: 14px;
-            margin: 3px 0 0;
+            margin: 5px 0 0;
         }
 
         .info {
@@ -83,14 +82,14 @@ if (file_exists($logoPath)) {
 </head>
 
 <body>
-<div class="header"
-    style="text-align: center; border-bottom: 2px solid #09182D; padding-bottom: 20px; margin-bottom: 30px;">
-    @if($logoBase64)
-        <img src="{{ $logoBase64 }}" alt="VoteMaster Logo" style="height:120px; margin-bottom: 10px;">
-    @endif
-    <h1 style="font-size: 28px; margin: 0; color: #09182D;">Official Voting Receipt</h1>
-    <p style="font-size: 14px; margin: 5px 0 0;">Generated on {{ now()->format('F d, Y h:i A') }}</p>
-</div>
+
+    <div class="header">
+        @if($logoBase64)
+            <img src="{{ $logoBase64 }}" alt="VoteMaster Logo">
+        @endif
+        <h1>Official Voting Receipt</h1>
+        <p>Generated on {{ now()->format('F d, Y h:i A') }}</p>
+    </div>
 
     <div class="info">
         <p><strong>Voter Name:</strong> {{ $user->name }}</p>
@@ -103,7 +102,8 @@ if (file_exists($logoPath)) {
             <tr>
                 <th>#</th>
                 <th>Election Title</th>
-                <th>Candidate Voted</th>
+                <th>Candidate</th>
+                <th>Position</th>
                 <th>Date Voted</th>
             </tr>
         </thead>
@@ -113,6 +113,7 @@ if (file_exists($logoPath)) {
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $vote->election->title ?? 'N/A' }}</td>
                     <td>{{ $vote->candidate->name ?? 'N/A' }}</td>
+                    <td>{{ $vote->candidate->position ?? 'N/A' }}</td>
                     <td>{{ \Carbon\Carbon::parse($vote->created_at)->format('F d, Y h:i A') }}</td>
                 </tr>
             @endforeach
@@ -122,6 +123,7 @@ if (file_exists($logoPath)) {
     <div class="footer">
         <p>© {{ date('Y') }} Voting Management System</p>
     </div>
+
 </body>
 
 </html>

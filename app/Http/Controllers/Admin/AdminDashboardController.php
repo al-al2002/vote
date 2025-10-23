@@ -10,43 +10,29 @@ use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
 {
-    public function index(Request $request)
-    {
-        $statusFilter = $request->query('status'); // active / closed / null
-        $now = Carbon::now();
+  public function index()
+{
+    $now = now();
 
-        // Stats
-        $activeElections = Election::where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now)
-            ->when($statusFilter && $statusFilter !== 'active', fn($q) => $q->whereRaw('0'), fn($q) => $q)
-            ->count();
+    $activeList = Election::where('start_date', '<=', $now)->where('end_date', '>=', $now)->get();
+    $closedList = Election::where('end_date', '<', $now)->get();
+    $upcomingList = Election::where('start_date', '>', $now)->get();
+    $voters = User::where('role', 'voter')->get();
 
-        $closedElections = Election::where('end_date', '<', $now)
-            ->when($statusFilter && $statusFilter !== 'closed', fn($q) => $q->whereRaw('0'), fn($q) => $q)
-            ->count();
+    $activeElections = $activeList->count();
+    $closedElections = $closedList->count();
+    $upcomingElections = $upcomingList->count();
+    $totalVoters = $voters->count();
 
-        $upcomingElections = Election::where('start_date', '>', $now)
-            ->when($statusFilter && $statusFilter !== 'upcoming', fn($q) => $q->whereRaw('0'), fn($q) => $q)
-            ->count();
+    $chartData = Election::withCount('votes')->get();
+    $chartLabels = $chartData->pluck('title');
+    $chartVotes = $chartData->pluck('votes_count');
 
-        $totalVoters = User::where('role', 'voter')->count();
+    return view('admin.dashboard', compact(
+        'activeElections', 'closedElections', 'upcomingElections', 'totalVoters',
+        'activeList', 'closedList', 'upcomingList', 'voters',
+        'chartLabels', 'chartVotes', 'chartData'
+    ));
+}
 
-        // Chart data (active + closed elections)
-        $elections = Election::withCount('votes')
-            ->when($statusFilter === 'active', fn($q) => $q->where('start_date', '<=', $now)->where('end_date', '>=', $now))
-            ->when($statusFilter === 'closed', fn($q) => $q->where('end_date', '<', $now))
-            ->get();
-
-        $chartLabels = $elections->pluck('title');
-        $chartData = $elections->pluck('votes_count');
-
-        return view('admin.dashboard', compact(
-            'activeElections',
-            'closedElections',
-            'upcomingElections', // <--- pass to the view
-            'totalVoters',
-            'chartLabels',
-            'chartData'
-        ));
-    }
 }

@@ -10,7 +10,7 @@
             <div class="bg-white p-6 rounded-lg shadow mb-6">
 
                 {{-- Election Title --}}
-                <h2 class="text-2xl font-bold mb-2 text-blue-600">{{ $election->title }}</h2>
+                <h2 class="text-2xl font-bold mb-2 text-[#09182D]">{{ $election->title }}</h2>
 
                 {{-- Dates --}}
                 <p class="text-sm text-gray-600">
@@ -24,52 +24,63 @@
                 </p>
 
                 {{-- Total Votes --}}
-                @php
-                    $totalVotes = $election->candidates->sum('votes_count');
-                @endphp
-                <p class="mt-1"><strong>Total Votes:</strong> {{ $totalVotes }}</p>
+                <p class="mt-1"><strong>Total Votes:</strong> {{ $election->total_votes }}</p>
 
-                {{-- Winners --}}
+                {{-- Winners grouped by position --}}
+                <h4 class="mt-3 font-semibold">🏆 Winners by Position:</h4>
+
                 @php
-                    $winners = $election->winners(); // Returns all candidates with max votes
+                    $groupedByPosition = $election->candidates->groupBy('position');
                 @endphp
-                <h4 class="mt-2 font-semibold">
-                    Winner{{ $winners->count() > 1 ? 's (Tie)' : '' }}:
-                </h4>
-                @if($winners->isNotEmpty())
-                    <ul class="list-disc list-inside text-yellow-600 font-bold">
-                        @foreach($winners as $winner)
-                            <li>🎉 {{ $winner->name }} ({{ $winner->votes_count }} votes)</li>
-                        @endforeach
-                    </ul>
-                @else
-                    <p>No votes were cast.</p>
-                @endif
+
+                @foreach($groupedByPosition as $position => $candidates)
+                    @php
+                        $maxVotes = $candidates->max('votes_count');
+                        $winners = $candidates->where('votes_count', $maxVotes);
+                        $isTie = $winners->count() > 1;
+                    @endphp
+
+                    <div class="mt-3">
+                        <h5 class="text-lg font-semibold text-[#09182D]">
+                            {{ $position }} {{ $isTie ? '(Tie)' : '' }}
+                        </h5>
+
+                        <ul class="list-disc list-inside text-yellow-600 font-bold">
+                            @foreach($winners as $winner)
+                                <li>
+                                    🎉 {{ $winner->name }} —
+                                    <span class="text-[#09182D]">{{ $winner->votes_count }} votes</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endforeach
 
                 {{-- Candidates Table --}}
-                <h4 class="mt-4 font-semibold">Candidates:</h4>
+                <h4 class="mt-5 font-semibold">Candidates:</h4>
                 <table class="min-w-full mt-2 border border-gray-200">
                     <thead>
-                        <tr class="bg-gray-100">
+                        <tr class="bg-gray-100 text-gray-700">
                             <th class="px-4 py-2 border">Photo</th>
                             <th class="px-4 py-2 border">Name</th>
+                            <th class="px-4 py-2 border">Position</th>
                             <th class="px-4 py-2 border">Votes</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @php $winnerIds = $winners->pluck('id')->toArray(); @endphp
                         @foreach($election->candidates as $candidate)
-                            <tr @if(in_array($candidate->id, $winnerIds)) class="bg-yellow-100 font-bold" @endif>
-                                <td class="px-4 py-2 border">
+                            <tr>
+                                <td class="px-4 py-2 border text-center">
                                     @if($candidate->photo)
                                         <img src="{{ asset('storage/' . $candidate->photo) }}" alt="{{ $candidate->name }}"
-                                            class="w-12 h-12 rounded-full object-cover">
+                                            class="w-12 h-12 rounded-full object-cover mx-auto">
                                     @else
                                         <span class="text-gray-400">No photo</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-2 border">{{ $candidate->name }}</td>
-                                <td class="px-4 py-2 border">{{ $candidate->votes_count ?? 0 }}</td>
+                                <td class="px-4 py-2 border text-[#09182D]">{{ $candidate->name }}</td>
+                                <td class="px-4 py-2 border text-[#09182D]">{{ $candidate->position }}</td>
+                                <td class="px-4 py-2 border text-center text-[#09182D]">{{ $candidate->votes_count ?? 0 }}</td>
                             </tr>
                         @endforeach
                     </tbody>

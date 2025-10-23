@@ -34,7 +34,7 @@ class Election extends Model
         return $this->hasMany(Vote::class);
     }
 
-    // Status checks with datetime
+    // Status checks
     public function isActive(): bool
     {
         $now = Carbon::now();
@@ -53,22 +53,40 @@ class Election extends Model
         return $this->end_date < $now;
     }
 
-    // Winners
+    // 🏆 Winners (with tie support)
     public function winners()
     {
+        // Only show winners for closed elections
         if (!$this->isClosed()) {
             return collect();
         }
 
-        $candidates = $this->candidates()->withCount('votes')->get();
-        if ($candidates->isEmpty()) return collect();
+        // Get all candidates with their vote counts
+        $candidates = $this->candidates()
+            ->withCount('votes')
+            ->get();
 
+        if ($candidates->isEmpty()) {
+            return collect();
+        }
+
+        // Get the highest number of votes
         $maxVotes = $candidates->max('votes_count');
-        return $candidates->where('votes_count', $maxVotes);
+
+        // Return all candidates with the highest vote count (tie supported)
+        return $candidates->where('votes_count', $maxVotes)->values();
     }
 
+    // 🪄 This allows $election->winners (no parentheses) to work
+    public function getWinnersAttribute()
+    {
+        return $this->winners();
+    }
+
+    // 🥇 Single winner (optional)
     public function winner()
     {
-        return $this->winners()->first();
+        $winners = $this->winners();
+        return $winners->count() === 1 ? $winners->first() : null;
     }
 }

@@ -11,59 +11,83 @@ use App\Http\Controllers\Controller;
 class ElectionController extends Controller
 {
     /**
-     * Display a listing of elections with their candidates.
+     * Show all elections.
      */
     public function index()
     {
-        $elections = Election::with('candidates')->get();
+        $elections = Election::with('candidates')
+            ->orderBy('start_date', 'desc')
+            ->get();
+
         return view('user.elections.index', compact('elections'));
     }
 
     /**
-     * Display a specific election and the user's vote (if exists).
+     * Show a specific election and the user's votes.
      */
     public function show(Election $election)
     {
         $user = Auth::user();
 
-        $userVote = Vote::where('user_id', $user->id)
+        // Fetch all votes the user cast in this election
+        $userVotes = Vote::where('user_id', $user->id)
                         ->where('election_id', $election->id)
-                        ->first();
+                        ->pluck('candidate_id')
+                        ->toArray();
 
         return view('user.elections.show', [
             'election'   => $election,
             'candidates' => $election->candidates,
-            'userVote'   => $userVote,
+            'userVotes'  => $userVotes,
         ]);
     }
 
     /**
-     * Cast a vote for a candidate in an election.
+     * Cast votes — one per position per election.
      */
-   public function vote(Request $request, Election $election)
-{
-    $user = Auth::user();
+    public function vote(Request $request, Election $election)
+    {
+        $user = Auth::user();
 
-    // Check if already voted
-    $existingVote = Vote::where('user_id', $user->id)
-                        ->where('election_id', $election->id)
-                        ->first();
+        $request->validate([
+            'candidate_ids' => 'required|array|min:1',
+            'candidate_ids.*' => 'exists:candidates,id',
+        ]);
 
-    if ($existingVote) {
-        return redirect()->route('user.dashboard')
-                         ->with('error', 'You have already voted in this election.');
+        // Check if user already voted in this election
+        $existingVotes = Vote::where('user_id', $user->id)
+                            ->where('election_id', $election->id)
+                            ->exists();
+
+        if ($existingVotes) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You have already voted in this election.'
+            ]);
+        }
+
+        // Enforce one vote per position
+        $selectedCandidates = \App\Models\Candidate::whereIn('id', $request->candidate_ids)->get();
+
+        $positionsVoted = [];
+
+        foreach ($selectedCandidates as $candidate) {
+            if (in_array($candidate->position, $positionsVoted)) {
+                continue; // skip duplicates for same position
+            }
+
+            Vote::create([
+                'user_id'      => $user->id,
+                'election_id'  => $election->id,
+                'candidate_id' => $candidate->id,
+            ]);
+
+            $positionsVoted[] = $candidate->position;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Your votes have been successfully cast!'
+        ]);
     }
-
-    // Save vote
-    Vote::create([
-        'user_id' => $user->id,
-        'election_id' => $election->id,
-        'candidate_id' => $request->candidate_id,
-    ]);
-
-    // Redirect to dashboard with success
-    return redirect()->route('user.dashboard')
-                     ->with('success', 'Your vote has been cast!');
-}
-
 }
